@@ -1,0 +1,337 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Departments & Courses</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600&family=Noto+Sans+Devanagari:wght@400&display=swap">
+</head>
+
+<body>
+
+<div class="campus-dashboard">
+
+    <!-- Sidebar -->
+    <aside class="sidebar-placeholder"></aside>
+
+
+    <!-- Main -->
+    <main class="main-content">
+
+        
+        <div class="thin-topbar no-print"><span class="net-status"><span id="netBadge" class="net-badge net-online">● Online</span></span>
+<select id="langSelect" class="btn-secondary" onchange="setLanguage(this.value)"><option value="en">English</option><option value="hi">हिंदी</option></select>
+<button id="themeToggle" class="btn-secondary" onclick="toggleTheme()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span>Dark</span></button></div>
+<header class="admin-header">
+
+            <div>
+                <h1 data-i18n="academic.courses.title">Departments & Courses</h1>
+                <p data-i18n="academic.courses.subtitle">Manage academic departments and courses.</p>
+            </div>
+
+        </header>
+
+
+        <!-- Department Section -->
+        <section class="academic-grid">
+
+            <div class="academic-form-section">
+
+                <div class="admin-section-title">
+                    <h2 data-i18n="academic.courses.addDept">Add Department</h2>
+                </div>
+
+                <form id="departmentForm">
+
+                    <label for="departmentName" data-i18n="academic.courses.deptName">
+                        Department Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="departmentName"
+                        data-i18n-ph="academic.courses.deptNamePh" placeholder="e.g. Computer Science"
+                        required
+                    >
+
+                    <label for="departmentCode" data-i18n="academic.courses.deptCode">
+                        Department Code
+                    </label>
+
+                    <input
+                        type="text"
+                        id="departmentCode"
+                        data-i18n-ph="academic.courses.deptCodePh" placeholder="e.g. CSE"
+                        required
+                    >
+
+                    <button
+                        type="submit"
+                        class="academic-btn">
+                        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span data-i18n="academic.courses.addDeptBtn">Add Department</span>
+                    </button>
+
+                </form>
+
+                <p id="departmentMessage"></p>
+
+            </div>
+
+
+            <!-- Course Form -->
+            <div class="academic-form-section">
+
+                <div class="admin-section-title">
+                    <h2 data-i18n="academic.courses.addCourse">Add Course</h2>
+                </div>
+
+                <form id="courseForm">
+
+                    <label for="courseName" data-i18n="academic.courses.courseName">
+                        Course Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="courseName"
+                        data-i18n-ph="academic.courses.courseNamePh" placeholder="e.g. Data Structures"
+                        required
+                    >
+
+                    <label for="courseCode" data-i18n="academic.courses.courseCode">
+                        Course Code
+                    </label>
+
+                    <input
+                        type="text"
+                        id="courseCode"
+                        data-i18n-ph="academic.courses.courseCodePh" placeholder="e.g. CSE201"
+                        required
+                    >
+
+                    <label for="courseDepartment" data-i18n="academic.courses.department">
+                        Department
+                    </label>
+
+                    <select
+                        id="courseDepartment"
+                        required
+                    >
+                        <option value="" data-i18n="academic.courses.selectDept">
+                            Select Department
+                        </option>
+                    </select>
+
+                    <label for="courseSemester" data-i18n="academic.courses.semester">
+                        Semester
+                    </label>
+
+                    <select
+                        id="courseSemester"
+                        required
+                    >
+                        <option value="" data-i18n="academic.courses.selectSem">
+                            Select Semester
+                        </option>
+
+                        <option data-i18n="academic.courses.sem1">1st Semester</option>
+                        <option data-i18n="academic.courses.sem2">2nd Semester</option>
+                        <option data-i18n="academic.courses.sem3">3rd Semester</option>
+                        <option data-i18n="academic.courses.sem4">4th Semester</option>
+                        <option data-i18n="academic.courses.sem5">5th Semester</option>
+                        <option data-i18n="academic.courses.sem6">6th Semester</option>
+                        <option data-i18n="academic.courses.sem7">7th Semester</option>
+                        <option data-i18n="academic.courses.sem8">8th Semester</option>
+                    </select>
+
+                    <button
+                        type="submit"
+                        class="academic-btn">
+                        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span data-i18n="academic.courses.addCourseBtn">Add Course</span>
+                    </button>
+
+                </form>
+
+                <p id="courseMessage"></p>
+
+            </div>
+
+        </section>
+
+
+        <!-- Departments -->
+        <section class="academic-list-section" id="departments">
+
+            <div class="admin-section-title">
+
+                <div>
+                    <h2 data-i18n="academic.courses.deptsTitle">Departments</h2>
+                    <p id="departmentCount">
+                        0 departments
+                    </p>
+                </div>
+
+                <input
+                    type="text"
+                    id="departmentSearch"
+                    class="academic-search"
+                    data-i18n-ph="academic.courses.searchDeptPh" placeholder="Search departments..."
+                    oninput="searchDepartments()"
+                >
+
+            </div>
+
+
+            <div
+                id="departmentList"
+                class="department-list"
+            ></div>
+
+        </section>
+
+
+        <!-- Courses -->
+        <section class="academic-list-section" id="courses">
+
+            <div class="admin-section-title">
+
+                <div>
+                    <h2 data-i18n="academic.courses.coursesTitle">Courses</h2>
+                    <p id="courseCount">
+                        0 courses
+                    </p>
+                </div>
+
+                <input
+                    type="text"
+                    id="courseSearch"
+                    class="academic-search"
+                    data-i18n-ph="academic.courses.searchCoursePh" placeholder="Search courses..."
+                    oninput="searchCourses()"
+                >
+
+            </div>
+
+
+            <div class="student-table-wrapper">
+
+                <table class="management-table">
+
+                    <thead>
+
+                        <tr>
+                            <th data-i18n="academic.courses.thCode">Code</th>
+                            <th data-i18n="academic.courses.thCourse">Course</th>
+                            <th data-i18n="academic.courses.thDept">Department</th>
+                            <th data-i18n="academic.courses.thSem">Semester</th>
+                            <th data-i18n="academic.courses.thAction">Action</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="courseTableBody"></tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script src="seed-01-people.js"></script>
+<script src="seed-02-timetable.js"></script>
+<script src="seed-03-fees.js"></script>
+<script src="seed-04-academic.js"></script>
+<script src="seed-05-campus.js"></script>
+<script src="seed-06-hub.js"></script>
+<script src="seed-07-notices.js"></script>
+<script src="script.js"></script><script src="campus-hub.js"></script><script src="campus-sidebar.js"></script><script src="lang.js"></script><script src="lang-academic.js"></script>
+
+<script>
+/*
+    Departments / Courses in-page navigation.
+
+    The sidebar exposes separate Departments and
+    Courses links that both open this page, so each
+    link carries a hash (#departments / #courses).
+    Highlight the matching nav entry and bring the
+    matching section into view.
+*/
+(function () {
+    function syncAcademicNav() {
+        var hash = (window.location.hash || "").toLowerCase();
+
+        var deptNav = document.getElementById("navDepartments");
+        var courseNav = document.getElementById("navCourses");
+
+        if (!deptNav || !courseNav) {
+            return;
+        }
+
+        if (hash === "#departments") {
+            deptNav.classList.add("active");
+            courseNav.classList.remove("active");
+        } else if (hash === "#courses") {
+            courseNav.classList.add("active");
+            deptNav.classList.remove("active");
+        }
+    }
+
+    window.addEventListener("hashchange", syncAcademicNav);
+
+    document.addEventListener("DOMContentLoaded", function () {
+        syncAcademicNav();
+
+        var hash = (window.location.hash || "").toLowerCase();
+
+        if (hash === "#departments" || hash === "#courses") {
+            var target = document.getElementById(hash.slice(1));
+
+            if (target && target.scrollIntoView) {
+                target.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+        }
+    });
+})();
+</script>
+
+<script>
+/* Student safety net: pageRoles already excludes Student; if one lands here, hide the add forms + course Action column. Additive; no handlers changed. */
+document.addEventListener("DOMContentLoaded", function () {
+  try {
+    var s = null;
+    try { s = JSON.parse(localStorage.getItem("campusSession") || "null"); } catch (e) { s = null; }
+    if (!s || s.role !== "Student") return;
+    function hideFormSection(formId) {
+      try {
+        var f = document.getElementById(formId);
+        if (!f) return;
+        var sec = f.closest ? f.closest("section") : null;
+        if (sec) sec.style.display = "none";
+      } catch (e) {}
+    }
+    hideFormSection("departmentForm");
+    hideFormSection("courseForm");
+    try {
+      var st = document.createElement("style");
+      st.textContent = "#courses .management-table th:last-child,#courses .management-table td:last-child{display:none}";
+      document.head.appendChild(st);
+    } catch (e) {}
+  } catch (e) {}
+});
+</script>
+
+</body>
+</html>

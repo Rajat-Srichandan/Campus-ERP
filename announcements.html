@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Announcements - Campus Admin</title>
+
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Scoped: Announcement publish header + button at extreme top-right */
+        .ann-create-card .ann-create-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+        .ann-create-card .ann-create-head h2{margin:0;display:flex;align-items:center;gap:8px}
+        .ann-create-card .ann-create-btn{width:auto;flex:0 0 auto;padding:11px 18px;background:#2563eb;color:#fff;border:0;border-radius:8px;font-weight:700;cursor:pointer}
+        .ann-create-card .ann-create-btn:hover{background:#1d4ed8}
+        /* Scoped: Semester + Priority + Date in same row */
+        .ann-create-card #announcementForm .ann-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;grid-column:1/-1;width:100%}
+        .ann-create-card #announcementForm .ann-row-3 .form-field{min-width:0}
+        @media(max-width:700px){.ann-create-card #announcementForm .ann-row-3{grid-template-columns:1fr}}
+        @media(max-width:600px){.ann-create-card .ann-create-head{flex-direction:column;align-items:stretch}.ann-create-card .ann-create-btn{width:100%}}
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600&family=Noto+Sans+Devanagari:wght@400&display=swap">
+</head>
+
+<body>
+
+<div class="campus-dashboard">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar-placeholder"></aside>
+
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <div class="thin-topbar no-print"><span class="net-status"><span id="netBadge" class="net-badge net-online">● Online</span></span>
+<select id="langSelect" class="btn-secondary" onchange="setLanguage(this.value)"><option value="en">English</option><option value="hi">हिंदी</option></select>
+<button id="themeToggle" class="btn-secondary" onclick="toggleTheme()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span>Dark</span></button>
+</div>
+
+        <header class="admin-header page-header announcements-page-header">
+
+            <div>
+                <h1 style="line-height:1.4;overflow:visible;"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg><span data-i18n="hub.ann.title">Announcements &amp; Notifications</span></h1>
+
+                <p>
+                    <span data-i18n="hub.ann.subtitle">Create and manage campus announcements.</span>
+                </p>
+            </div>
+
+        </header>
+
+
+        <!-- SUMMARY -->
+        <section class="announcement-summary">
+
+            <div class="announcement-summary-card">
+
+                <h3 data-i18n="hub.ann.totalTitle">Total Announcements</h3>
+
+                <p id="totalAnnouncements">0</p>
+
+            </div>
+
+
+            <div class="announcement-summary-card">
+
+                <h3 data-i18n="hub.ann.forStud">For Students</h3>
+
+                <p id="studentAnnouncements">0</p>
+
+            </div>
+
+
+            <div class="announcement-summary-card">
+
+                <h3 data-i18n="hub.ann.forFac">For Faculty</h3>
+
+                <p id="facultyAnnouncements">0</p>
+
+            </div>
+
+
+            <div class="announcement-summary-card">
+
+                <h3 data-i18n="hub.ann.highPri">High Priority</h3>
+
+                <p id="highPriorityAnnouncements">0</p>
+
+            </div>
+
+        </section>
+
+
+        <!-- CREATE ANNOUNCEMENT -->
+        <section class="management-card ann-create-card">
+
+            <div class="ann-create-head"><h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg><span data-i18n="hub.ann.createTitle">Create Announcement</span></h2><button type="submit" form="announcementForm" class="btn-primary ann-create-btn" data-i18n="hub.ann.publishBtn">Publish Announcement</button></div>
+
+            <form id="announcementForm" class="management-form" onsubmit="addAnnouncement(event)">
+
+                <div class="form-field" style="grid-column:1/-1">
+                    <label for="announcementTitle" data-i18n="hub.ann.lblTitle">Announcement Title</label>
+                    <input
+                        type="text"
+                        id="announcementTitle"
+                        placeholder="Announcement Title" data-i18n-ph="hub.ann.phTitle"
+                        style="grid-column:1/-1"
+                        required
+                    >
+                </div>
+
+
+                <div class="form-field" style="grid-column:1/-1">
+                    <label for="announcementMessage" data-i18n="hub.ann.lblMsg">Message</label>
+                    <textarea
+                        id="announcementMessage"
+                        placeholder="Write announcement message..." data-i18n-ph="hub.ann.phMsg"
+                        rows="5"
+                        style="grid-column:1/-1"
+                        required
+                    ></textarea>
+                </div>
+
+
+                <div class="form-field">
+                    <label for="announcementAudience" data-i18n="hub.ann.lblAud">Audience</label>
+                    <select
+                        id="announcementAudience"
+                        required
+                    >
+
+                        <option value="" data-i18n="hub.ann.selAud">Select Audience</option>
+
+                        <option value="All" data-i18n="hub.ann.optAll">All Users</option>
+
+                        <option value="Students" data-i18n="hub.ann.optStud">Students</option>
+
+                        <option value="Faculty" data-i18n="hub.ann.optFac">Faculty</option>
+
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label for="announcementDept" data-i18n="hub.ann.lblDept">Department</label>
+                    <select id="announcementDept">
+                        <option value="All" data-i18n="hub.ann.optAllDept">All departments</option>
+                        <option data-i18n="hub.ann.optCS">Computer Science</option>
+                        <option data-i18n="hub.ann.optIT">Information Technology</option>
+                        <option data-i18n="hub.ann.optMech">Mechanical Engineering</option>
+                    </select>
+                </div>
+
+                <div class="ann-row-3">
+                <div class="form-field">
+                    <label for="announcementSemester" data-i18n="hub.ann.lblSem">Semester</label>
+                    <select id="announcementSemester">
+                        <option value="All" data-i18n="hub.ann.optAllSem">All semesters</option>
+                        <option data-i18n="hub.ann.optSem1">1st Semester</option>
+                        <option data-i18n="hub.ann.optSem2">2nd Semester</option>
+                        <option data-i18n="hub.ann.optSem3">3rd Semester</option>
+                        <option data-i18n="hub.ann.optSem4">4th Semester</option>
+                        <option data-i18n="hub.ann.optSem5">5th Semester</option>
+                        <option data-i18n="hub.ann.optSem6">6th Semester</option>
+                        <option data-i18n="hub.ann.optSem7">7th Semester</option>
+                        <option data-i18n="hub.ann.optSem8">8th Semester</option>
+                    </select>
+                </div>
+
+
+                <div class="form-field">
+                    <label for="announcementPriority" data-i18n="hub.ann.lblPri">Priority</label>
+                    <select
+                        id="announcementPriority"
+                        required
+                    >
+
+                        <option value="" data-i18n="hub.ann.selPri">Select Priority</option>
+
+                        <option value="Normal" data-i18n="hub.ann.optNormal">Normal</option>
+
+                        <option value="Important" data-i18n="hub.ann.optImportant">Important</option>
+
+                        <option value="High" data-i18n="hub.ann.optHigh">High</option>
+
+                    </select>
+                </div>
+
+
+                <div class="form-field">
+                    <label for="announcementDate" data-i18n="hub.ann.lblDate">Date</label>
+                    <input
+                        type="date"
+                        id="announcementDate"
+                        required
+                    >
+                </div>
+                </div>
+
+            </form>
+            <div class="hub-nav"><a class="btn-secondary" href="ops-dashboard.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg><span data-i18n="nav.ops">Ops Insights</span></a><a class="btn-secondary" href="requests.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg><span data-i18n="nav.requests">Requests</span></a></div>
+
+        </section>
+
+
+        <!-- SEARCH -->
+        <section class="management-card">
+
+            <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span data-i18n="hub.ann.searchTitle">Search Announcements</span></h2>
+
+            <div class="search-row">
+
+                <input
+                    type="text"
+                    id="announcementSearch"
+                    class="search-input"
+                    placeholder="Search by title, message or audience..." data-i18n-ph="hub.ann.phSearch"
+                    onkeyup="searchAnnouncements()"
+                >
+
+
+                <select
+                    id="announcementFilter"
+                    class="search-input"
+                    onchange="searchAnnouncements()"
+                >
+
+                    <option value="all" data-i18n="hub.ann.filterAll">All</option>
+
+                    <option value="Students" data-i18n="hub.ann.filterStud">Students</option>
+
+                    <option value="Faculty" data-i18n="hub.ann.filterFac">Faculty</option>
+
+                    <option value="All" data-i18n="hub.ann.filterAllU">All Users</option>
+
+                    <option value="High" data-i18n="hub.ann.filterHigh">High Priority</option>
+
+                </select>
+
+            </div>
+
+        </section>
+
+
+        <!-- ANNOUNCEMENT TABLE -->
+        <section class="management-card">
+
+            <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg><span data-i18n="hub.ann.listTitle">Announcement List</span></h2>
+
+            <div class="table-container student-table-wrapper">
+
+                <table class="management-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th data-i18n="hub.ann.thTitle">Title</th>
+                            <th data-i18n="hub.ann.thMsg">Message</th>
+                            <th data-i18n="hub.ann.thAud">Audience</th>
+                            <th data-i18n="hub.ann.thPri">Priority</th>
+                            <th data-i18n="hub.ann.thDate">Date</th>
+                            <th data-i18n="hub.ann.thAction">Action</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="announcementTableBody"></tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script src="seed-01-people.js"></script>
+<script src="seed-02-timetable.js"></script>
+<script src="seed-03-fees.js"></script>
+<script src="seed-04-academic.js"></script>
+<script src="seed-05-campus.js"></script>
+<script src="seed-06-hub.js"></script>
+<script src="seed-07-notices.js"></script>
+<script src="script.js"></script>
+<script src="campus-hub.js"></script>
+<script src="campus-sidebar.js"></script>
+<script src="lang.js"></script>
+
+<script>
+/* Student view: hide admin-only create forms (students keep view-only tables + query forms). Additive; no handlers changed. */
+document.addEventListener("DOMContentLoaded", function () {
+  try {
+    var s = null;
+    try { s = JSON.parse(localStorage.getItem("campusSession") || "null"); } catch (e) { s = null; }
+    if (!s || s.role !== "Student") return;
+    function hideFormSection(formId) {
+      try {
+        var f = document.getElementById(formId);
+        if (!f) return;
+        var sec = f.closest ? f.closest("section") : null;
+        if (sec) sec.style.display = "none";
+      } catch (e) {}
+    }
+    hideFormSection("announcementForm");
+  } catch (e) {}
+});
+</script>
+</body>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Title left as static English; i18n handles page content via data-i18n -->
+    <title>Campus ERP - Login</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600&family=Noto+Sans+Devanagari:wght@400&display=swap">
+</head>
+
+<body>
+
+<div class="login-container">
+
+<div class="login-box">
+
+    <div class="login-header">
+        <h1>Campus ERP</h1>
+        <p data-i18n="login.subtitle">Campus Management System</p>
+        <div class="login-header-actions">
+            <button id="themeToggle" type="button" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle theme"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+            <button id="langToggle" type="button" onclick="toggleLang()" aria-label="Toggle language" title="Toggle language">हिंदी</button>
+        </div>
+    </div>
+
+    <form onsubmit="loginUser(event)">
+
+        <div class="form-group">
+
+            <label for="loginRole" data-i18n="login.loginAs">
+                Login As
+            </label>
+
+            <select id="loginRole" required>
+
+                <option value="" data-i18n="login.selectRole">
+                    Select Role
+                </option>
+
+                <option value="Student" data-i18n="login.student">
+                    Student
+                </option>
+
+                <option value="Faculty" data-i18n="login.faculty">
+                    Faculty
+                </option>
+
+                <option value="Admin" data-i18n="login.administrator">
+                    Administrator
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="loginEmail" data-i18n="login.emailUserId">
+                Email / User ID
+            </label>
+
+            <input
+                type="text"
+                id="loginEmail"
+                data-i18n-ph="login.enterEmailOrUserId"
+                placeholder="Enter email or user ID"
+                required
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="loginPassword" data-i18n="login.password">
+                Password
+            </label>
+
+            <div class="pwd-wrap">
+                <input
+                    type="password"
+                    id="loginPassword"
+                    data-i18n-ph="login.enterPassword"
+                    placeholder="Enter password"
+                    required
+                >
+                <button type="button" class="pwd-toggle" aria-label="Show password" aria-pressed="false" title="Show password" onclick="togglePasswordVisibility('loginPassword', this)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+            </div>
+
+        </div>
+
+
+        <button
+            type="submit"
+            class="login-btn"
+            data-i18n="login.loginBtn"
+        >
+            Login
+        </button>
+
+    </form>
+
+
+    <div class="demo-login-info">
+
+        <h3 data-i18n="login.demoAccounts">Demo Accounts</h3>
+
+        <p>
+            <strong data-i18n="login.adminLabel">Admin:</strong>
+            ADMIN001 / admin123
+        </p>
+
+        <p>
+            <strong data-i18n="login.studentLabel">Student:</strong>
+            STU001 / student123
+        </p>
+
+        <p>
+            <strong data-i18n="login.facultyLabel">Faculty:</strong>
+            FAC001 / faculty123
+        </p>
+
+        <div class="demo-fill-row">
+            <button type="button" class="demo-fill-btn" onclick="fillDemo('Admin','ADMIN001','admin123')" data-i18n="login.fillAdmin">Fill Admin</button>
+            <button type="button" class="demo-fill-btn" onclick="fillDemo('Student','STU001','student123')" data-i18n="login.fillStudent">Fill Student</button>
+            <button type="button" class="demo-fill-btn" onclick="fillDemo('Faculty','FAC001','faculty123')" data-i18n="login.fillFaculty">Fill Faculty</button>
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+<script src="seed-01-people.js"></script>
+<script src="seed-02-timetable.js"></script>
+<script src="seed-03-fees.js"></script>
+<script src="seed-04-academic.js"></script>
+<script src="seed-05-campus.js"></script>
+<script src="seed-06-hub.js"></script>
+<script src="seed-07-notices.js"></script>
+<script src="campus-hub.js"></script>
+<script src="script.js"></script>
+<script src="lang.js"></script>
+<script src="lang-login.js"></script>
+<script>
+(function seedDemoUsers() {
+    try {
+        if (!localStorage.getItem("campusUsers")) {
+            localStorage.setItem("campusUsers", JSON.stringify([
+                { id: "USR001", name: "Rajat Admin", userId: "ADMIN001", email: "admin@campus.edu", password: "admin123", role: "Admin", status: "Active" },
+                { id: "USR002", name: "Rahul Kumar", userId: "STU001", email: "rahul@example.com", password: "student123", role: "Student", status: "Active" },
+                { id: "USR003", name: "Dr. Priya Sharma", userId: "FAC001", email: "priya@example.com", password: "faculty123", role: "Faculty", status: "Active" }
+            ]));
+        }
+    } catch (e) {}
+})();
+function fillDemo(role, id, pwd) {
+    document.getElementById("loginRole").value = role;
+    document.getElementById("loginEmail").value = id;
+    document.getElementById("loginPassword").value = pwd;
+}
+function togglePasswordVisibility(inputId, btn) {
+    var input = document.getElementById(inputId);
+    if (!input) return;
+    var show = input.type === "password";
+    input.type = show ? "text" : "password";
+    var EYE_SVG = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'; var EYE_OFF_SVG = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'; btn.innerHTML = show ? EYE_OFF_SVG : EYE_SVG;
+    btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
+    btn.setAttribute("aria-pressed", show ? "true" : "false");
+    btn.setAttribute("title", show ? "Hide password" : "Show password");
+    input.focus({ preventScroll: true });
+    try {
+        var len = input.value.length;
+        input.setSelectionRange(len, len);
+    } catch (e) {}
+}
+</script>
+
+</body>
+</html>

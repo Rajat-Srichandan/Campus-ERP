@@ -1,0 +1,331 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Student Dashboard - Campus Management</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600&family=Noto+Sans+Devanagari:wght@400&display=swap">
+    <link rel="manifest" href="manifest.json">
+</head>
+
+<body>
+
+    <div class="student-dashboard">
+
+        <!-- ================= SIDEBAR ================= -->
+
+        <aside class="sidebar-placeholder"></aside>
+
+
+        <!-- ================= MAIN CONTENT ================= -->
+
+        <main class="student-main">
+
+            <!-- Thin top bar: utilities only (lang/theme/online/profile) -->
+            <div class="thin-topbar no-print">
+                <span class="net-status"><span id="netBadge" class="net-badge net-online">● Online</span></span>
+                <select id="langSelect" class="btn-secondary" onchange="setLanguage(this.value)"><option value="en" data-i18n="student.dashboard.english">English</option><option value="hi" data-i18n="student.dashboard.hindi">हिंदी</option></select>
+                <button id="themeToggle" class="btn-secondary" onclick="toggleTheme()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg><span data-i18n="student.dashboard.dark">Dark</span></button>
+                <div class="student-profile thin-profile">
+
+                    <div class="student-avatar">
+                        RS
+                    </div>
+
+                    <div>
+                        <strong>Student</strong>
+                        <small>student@campus.edu</small>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Header: title + subtitle only -->
+
+            <header class="student-header">
+
+                <div>
+                    <h1 data-i18n="student.dashboard.title">Student Dashboard</h1>
+
+                    <p data-i18n="student.dashboard.welcome">
+                        Welcome back! Here's your campus overview.
+                    </p>
+                </div>
+
+            </header>
+
+
+            <!-- ================= STATISTICS ================= -->
+
+            <section class="student-stats">
+
+                <div class="student-card">
+
+                    <span class="card-icon stat-ic" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><polyline points="9 16 11 18 15 14"/></svg></span>
+
+                    <div>
+                        <p data-i18n="student.dashboard.attendance">Attendance</p>
+                        <h2 id="studAttendPct">—</h2>
+                        <small id="studAttendSub">live from Attendance page</small>
+                    </div>
+
+                </div>
+
+
+                <div class="student-card">
+
+                    <span class="card-icon stat-ic" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+
+                    <div>
+                        <p data-i18n="student.dashboard.pendingRequests">My pending requests</p>
+                        <h2 id="studPendingMine">0</h2>
+                        <small><a class="link-btn" href="requests.html" data-i18n="student.dashboard.leaveGatePass">Leave & Gate-Pass</a></small>
+                    </div>
+
+                </div>
+
+
+                <div class="student-card">
+
+                    <span class="card-icon stat-ic" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></span>
+
+                    <div>
+                        <p data-i18n="student.dashboard.messToday">Mess today</p>
+                        <h2 style="font-size:13px" id="studMessToday">—</h2>
+                    </div>
+
+                </div>
+
+
+                <div class="student-card">
+
+                    <span class="card-icon stat-ic" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
+
+                    <div>
+                        <p data-i18n="student.dashboard.feesDue">Fees Due</p>
+                        <h2 id="studFeesDue">—</h2>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <section class="dashboard-section">
+                <div class="section-header"><h2 data-i18n="student.dashboard.services">My Services (one tap)</h2></div>
+                <div class="hub-nav">
+                    <a class="btn-secondary" href="requests.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span data-i18n="student.dashboard.leaveGatePass">Leave & Gate-Pass</span></a>
+                    <a class="btn-secondary" href="certificates.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg><span data-i18n="student.dashboard.certificates">Certificates</span></a>
+                    <a class="btn-secondary" href="complaints.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><span data-i18n="student.dashboard.complaints">Complaints</span></a>
+                    <a class="btn-secondary" href="mess.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg><span data-i18n="student.dashboard.mess">Mess</span></a>
+                    <a class="btn-secondary" href="announcements.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span data-i18n="student.dashboard.notices">Notices</span></a>
+                    <a class="btn-secondary" href="fees.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg><span data-i18n="student.dashboard.feesQueries">Fees + Queries</span></a>
+                </div>
+            </section>
+
+
+            <!-- ================= CONTENT GRID ================= -->
+
+            <section class="student-content-grid">
+
+
+                <!-- Today's Classes -->
+
+                <div class="dashboard-section">
+
+                    <div class="section-header">
+
+                        <h2 data-i18n="student.dashboard.todayClasses">Today's Classes (live)</h2>
+
+                        <a class="link-btn" href="timetable.html" data-i18n="student.dashboard.viewAll">
+                            View All
+                        </a>
+
+                    </div>
+
+                    <div id="timetableTodayBody"></div>
+
+                </div>
+
+
+                <!-- Notices + Requests -->
+
+                <div class="dashboard-section">
+
+                    <div class="section-header">
+
+                        <h2 data-i18n="student.dashboard.myNotices">My Notices (targeted)</h2>
+
+                        <a class="link-btn" href="announcements.html" data-i18n="student.dashboard.all">
+                            All
+                        </a>
+
+                    </div>
+
+                    <div id="myNoticesStudent"></div>
+
+                </div>
+
+                <div class="dashboard-section">
+
+                    <div class="section-header">
+
+                        <h2 data-i18n="student.dashboard.myRequests">My Requests</h2>
+
+                        <a class="link-btn" href="requests.html" data-i18n="student.dashboard.new">
+                            New
+                        </a>
+
+                    </div>
+
+                    <div id="myRequestsPreview"></div>
+
+                </div>
+
+
+                <!-- Attendance -->
+
+                <div class="dashboard-section">
+
+                    <div class="section-header">
+
+                        <h2 data-i18n="student.dashboard.attendance">Attendance</h2>
+
+                        <a class="link-btn" href="attendance.html" data-i18n="student.dashboard.details">
+                            Details
+                        </a>
+
+                    </div>
+
+                    <div class="attendance-box">
+
+                        <div class="attendance-circle">
+                            <span>82%</span>
+                        </div>
+
+                        <p data-i18n="student.dashboard.overallAttendance">
+                            Overall Attendance
+                        </p>
+
+                        <small>
+                            41 of 50 classes attended
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+            </section>
+
+
+            <!-- ================= AI COPILOT ================= -->
+
+            <section class="copilot-section">
+
+                <div class="copilot-header">
+
+                    <div>
+                        <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg><span data-i18n="student.dashboard.copilot">Campus Copilot</span></h2>
+
+                        <p data-i18n="student.dashboard.copilotAsk">
+                            Ask me anything about your campus.
+                        </p>
+                    </div>
+
+                    <span class="online">
+                        ● <span data-i18n="student.dashboard.online">Online</span>
+                    </span>
+
+                </div>
+
+
+                <div
+                    class="chat-area"
+                    id="chatArea"
+                >
+
+                    <div class="bot-message">
+
+                        <strong data-i18n="student.dashboard.copilot">Campus Copilot</strong>
+
+                        <p>
+                            Hello! <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg> <span data-i18n="student.dashboard.copilotHelp">How can I help you today?</span>
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="chat-input">
+
+                    <input
+                        type="text"
+                        id="copilotInput"
+                        placeholder="Ask something... e.g. What is my attendance?" data-i18n-ph="student.dashboard.copilotPlaceholder"
+                    >
+
+                    <button onclick="askCopilot()" data-i18n="student.dashboard.send">
+                        Send
+                    </button>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+
+    <script src="seed-01-people.js"></script>
+    <script src="seed-02-timetable.js"></script>
+    <script src="seed-03-fees.js"></script>
+    <script src="seed-04-academic.js"></script>
+    <script src="seed-05-campus.js"></script>
+    <script src="seed-06-hub.js"></script>
+    <script src="seed-07-notices.js"></script>
+    <script src="script.js"></script>
+    <script src="campus-hub.js"></script>
+    <script src="campus-sidebar.js"></script>
+    <script src="lang.js"></script>
+    <script src="lang-student.js"></script>
+    <script>
+    // Fill thin-topbar profile from session (guarded; live updaters untouched).
+    (function () {
+        function fillThinProfile() {
+            try {
+                var sess = JSON.parse(localStorage.getItem("campusSession") || "null");
+                var prof = JSON.parse(localStorage.getItem("campusCurrentStudentProfile") || "null");
+                var name = (sess && sess.name) || (prof && prof.name) || "";
+                var email = (sess && (sess.email || sess.username)) || (prof && prof.email) || "";
+                if (!name && !email) return;
+                var box = document.querySelector(".thin-profile");
+                if (!box) return;
+                var strong = box.querySelector("strong");
+                var small = box.querySelector("small");
+                var avatar = box.querySelector(".student-avatar");
+                if (strong && name) strong.textContent = name;
+                if (small && email) small.textContent = email;
+                if (avatar && name) {
+                    var initials = String(name).trim().split(/\s+/).map(function (w) { return w.charAt(0); }).join("").toUpperCase().slice(0, 2);
+                    if (initials) avatar.textContent = initials;
+                }
+            } catch (e) {}
+        }
+        if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fillThinProfile);
+        else fillThinProfile();
+    })();
+    </script>
+
+</body>
+
+</html>

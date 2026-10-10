@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ops Insights - Campus Hub</title><link rel="stylesheet" href="style.css">
+    <style>
+        /* Page-scoped: offset the main pane for the ADMIN / FACULTY rails.
+           style.css:10529 lays out .campus-dashboard as flex and offsets
+           .main-content only when campus-sidebar.js adopted
+           aside.student-sidebar. .admin-sidebar / .faculty-sidebar are
+           position:fixed 250px (style.css:3470 / 871), so without these
+           two selectors the fixed rail overlaps the content for those
+           roles. Same values as the existing student rule; harmless when
+           a Student is logged in (that case never renders those rails). */
+        .campus-dashboard:has(> aside.admin-sidebar) > .main-content,
+        .campus-dashboard:has(> aside.faculty-sidebar) > .main-content {
+            margin-left: 250px;
+            width: calc(100% - 250px)
+        }
+
+        @media (max-width:700px) {
+            .campus-dashboard:has(> aside.admin-sidebar) > .main-content,
+            .campus-dashboard:has(> aside.faculty-sidebar) > .main-content {
+                margin-left: 70px;
+                width: calc(100% - 70px)
+            }
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600&family=Noto+Sans+Devanagari:wght@400&display=swap"></head>
+<body>
+<div class="campus-dashboard">
+<aside class="sidebar-placeholder"></aside>
+<main class="main-content">
+<div class="thin-topbar no-print"><span class="net-status"><span id="netBadge" class="net-badge net-online" data-i18n="common.online">● Online</span></span>
+<select id="langSelect" class="btn-secondary" onchange="setLanguage(this.value)"><option value="en">English</option><option value="hi">हिंदी</option></select>
+<button id="themeToggle" class="btn-secondary" onclick="toggleTheme()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg><span data-i18n="common.darkMode">Dark</span></button></div>
+<div class="page-header"><div><h1 data-i18n="admin.ops.title">Ops Insights</h1><p data-i18n="admin.ops.subtitle">Real-time pending, complaint status, resolution time &amp; recurring issues.</p></div></div>
+<div class="hub-grid">
+<div class="hub-stat"><h3 data-i18n="admin.ops.totalPending">Total pending</h3><p id="opsPending">0</p></div>
+<div class="hub-stat"><h3 data-i18n="admin.ops.reqPending">Leave/GatePass pending</h3><p id="opsReqPending">0</p></div>
+<div class="hub-stat"><h3 data-i18n="admin.ops.compOpen">Complaints open</h3><p id="opsCompOpen">0</p></div>
+<div class="hub-stat"><h3 data-i18n="admin.ops.certPending">Certificates pending</h3><p id="opsCertPending">0</p></div>
+<div class="hub-stat"><h3 data-i18n="admin.ops.feeOpen">Fee queries open</h3><p id="opsFeeOpen">0</p></div>
+<div class="hub-stat"><h3 data-i18n="admin.ops.avgResolve">Avg resolve time</h3><p id="opsAvgResolve">—</p></div>
+<div class="hub-stat"><h3 data-i18n="admin.ops.breach">SLA breached</h3><p id="opsBreach">0</p></div>
+<div class="hub-stat"><h3 data-i18n="admin.ops.messRating">Mess rating</h3><p id="opsMess">—</p></div>
+<div class="hub-stat"><h3 data-i18n="admin.ops.lowAttend">Low attendance</h3><p id="opsLowAttend">0</p></div>
+<div class="hub-stat"><h3 data-i18n="admin.ops.todayClasses">Classes today</h3><p id="opsTodayClasses">0</p></div>
+</div>
+<div class="hub-nav"><small id="opsServerNote" data-i18n="admin.ops.serverNote">Local (offline-first) view. Start backend to also sync server.</small>
+<small id="opsReadOnlyNote" style="display:none">Read-only insights view: fee-query triage and per-student identity columns are hidden for Students &amp; Faculty.</small></div>
+<section class="management-card"><h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12 7.586 16.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg><span data-i18n="admin.ops.pendingQueue">Pending queue (oldest first for action)</span></h2>
+<div class="table-container"><table><thead><tr><th data-i18n="admin.ops.thType">Type</th><th data-i18n="admin.ops.thId">ID</th><th data-ops-private="1" data-i18n="admin.ops.thWho">Who / Room</th><th data-i18n="admin.ops.thDate">Date</th></tr></thead>
+<tbody id="opsPendingBody"></tbody></table></div></section>
+<section class="management-card"><h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span data-i18n="admin.ops.recurring">Recurring issues (fix once, save daily time)</span></h2><div class="maint-progress"><div class="maint-row"><div class="maint-head"><span data-i18n="admin.ops.electrical">Electrical</span><span class="maint-count">5/20</span></div><div class="progress-segmented" data-done="5" data-total="20" data-count="5" role="progressbar" aria-valuemin="0" aria-valuemax="20" aria-valuenow="5" aria-valuetext="5 of 20" aria-label="Electrical recurring issues fixed 5 of 20"></div></div><div class="maint-row"><div class="maint-head"><span data-i18n="admin.ops.cleaning">Cleaning</span><span class="maint-count">4/20</span></div><div class="progress-segmented" data-done="4" data-total="20" data-count="4" role="progressbar" aria-valuemin="0" aria-valuemax="20" aria-valuenow="4" aria-valuetext="4 of 20" aria-label="Cleaning recurring issues fixed 4 of 20"></div></div><div class="maint-row"><div class="maint-head"><span data-i18n="admin.ops.overallCompletion">Overall completion</span><span class="maint-count" id="opsCompletionPct">25%</span></div><div class="progress progress-gradient" id="opsCompletionTrack" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="25" aria-valuetext="25%" aria-label="Overall maintenance completion"><div class="progress-bar" id="opsCompletionBar" style="width:25%" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="25" aria-valuetext="25%"></div></div></div></div></section>
+<section class="management-card"><h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span data-i18n="admin.ops.lowAttendTitle">Low attendance (&lt;75%) — early action</span></h2>
+<div class="table-container"><table><thead><tr><th data-ops-private="1" data-i18n="admin.ops.thStudent">Student</th><th data-ops-private="1" data-i18n="admin.ops.thId2">ID</th><th data-i18n="admin.ops.thPresent">Present/Total</th><th data-i18n="admin.ops.thPct">Pct</th></tr></thead>
+<tbody id="opsLowAttendBody"></tbody></table></div></section>
+<section class="management-card"><h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg><span data-i18n="admin.ops.feeQueries">Fee-related queries (no separate counter queue)</span></h2>
+<form id="feeQueryForm" class="management-form">
+<input type="text" id="fqSid" placeholder="Student ID" data-i18n-ph="admin.ops.phStudentId">
+<select id="fqTopic" required><option value="" data-i18n="admin.ops.topic">Topic</option><option>Tuition mismatch</option><option>Hostel fee</option><option>Scholarship not applied</option><option>Receipt missing</option><option>Fine waiver</option></select>
+<textarea id="fqText" placeholder="Details (e.g. paid ₹25,000 on 2 Oct, receipt no. ...)" data-i18n-ph="admin.ops.phDetails" required></textarea>
+<button type="submit" class="btn-primary" data-i18n="admin.ops.raiseQuery">Raise query</button></form><p id="fqMsg"></p>
+<div class="table-container"><table><thead><tr><th data-i18n="admin.ops.thId3">ID</th><th data-i18n="admin.ops.thStudent2">Student</th><th data-i18n="admin.ops.thQuery">Query</th><th data-i18n="admin.ops.thStatus">Status</th><th data-ops-adminonly="1" data-i18n="admin.ops.thAction">Action</th></tr></thead>
+<tbody id="feeQueryBody"></tbody></table></div></section>
+<section class="management-card"><h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span data-i18n="admin.ops.noticesTitle">Targeted notices — how to use</span></h2>
+<p><small data-i18n="admin.ops.noticesHelp">Go to Announcements: pick Audience + Department + Semester (auto-added) + Priority. Student Dashboard → My Notices auto-filters by login dept/sem. High-priority also print for offline board. No WhatsApp groups needed.</small></p>
+<div id="myNotices"></div>
+<div id="opsMyNotices" style="display:none"></div></section>
+</main></div>
+<script src="seed-01-people.js"></script>
+<script src="seed-02-timetable.js"></script>
+<script src="seed-03-fees.js"></script>
+<script src="seed-04-academic.js"></script>
+<script src="seed-05-campus.js"></script>
+<script src="seed-06-hub.js"></script>
+<script src="seed-07-notices.js"></script>
+<script src="script.js"></script><script src="progress.js"></script><script src="campus-hub.js"></script><script src="campus-sidebar.js"></script><script src="lang.js"></script><script src="lang-admin.js"></script>
+<script>
+/* ============================================================
+   ROLE GATE — Ops Insights is an analytics view.
+   Admin  : full page (unchanged).
+   Faculty/Student : read-only aggregate view.
+     - fee-query triage section (form + all-queries table with
+       the Admin-only "Resolve" control) is hidden;
+     - columns carrying other students' identity
+       (data-ops-private) are hidden;
+     - any approve/reject/resolve/mark/delete/raise control
+       that is rendered later into <main> is hidden too.
+   No IDs are removed/renamed: campus-hub.js
+   updateOpsDashboard()/displayFeeQueries() keep working, the
+   hidden nodes are still updated, just not shown.
+   Vanilla, guarded by try/catch, no alert()/confirm() on load.
+   ============================================================ */
+(function () {
+  "use strict";
+
+  function sessionRole() {
+    try {
+      var s = JSON.parse(localStorage.getItem("campusSession") || "null");
+      if (s && typeof s.role === "string" && s.role) return s.role;
+    } catch (e) {}
+    return "";
+  }
+
+  function hide(el) {
+    try { if (el && el.style) el.style.display = "none"; } catch (e) {}
+  }
+
+  function show(el) {
+    try { if (el && el.style) el.style.display = ""; } catch (e) {}
+  }
+
+  function hideMatchingCells(row, indices) {
+    try {
+      if (!row || !row.children) return;
+      for (var i = 0; i < indices.length; i++) hide(row.children[indices[i]]);
+    } catch (e) {}
+  }
+
+  function gateOpsForReadOnlyRole() {
+    var role = sessionRole();
+    if (role !== "Student" && role !== "Faculty") return;   // Admin: untouched
+
+    /* 1. Admin-only "Action" column header of the fee-query table. */
+    var adminHeads = document.querySelectorAll('[data-ops-adminonly]');
+    for (var h = 0; h < adminHeads.length; h++) hide(adminHeads[h]);
+
+    /* 2. Fee-query triage section: raising a query + the all-queries
+          table (Admin-only Resolve buttons, other students' rows). */
+    var feeForm = document.getElementById("feeQueryForm");
+    var feeSec = feeForm && feeForm.closest ? feeForm.closest("section") : null;
+    hide(feeSec);
+    hide(document.getElementById("feeQueryBody2"));
+
+    /* 3. Identity columns (Who/Room, Student, ID) — aggregate only. */
+    var privateHeads = document.querySelectorAll("[data-ops-private]");
+    var masked = [];
+    for (var i = 0; i < privateHeads.length; i++) {
+      var th = privateHeads[i];
+      hide(th);
+      var table = th.closest ? th.closest("table") : null;
+      if (!table) continue;
+      var headRow = th.parentNode;
+      var idx = -1;
+      for (var c = 0; c < headRow.children.length; c++) {
+        if (headRow.children[c] === th) { idx = c; break; }
+      }
+      if (idx >= 0) masked.push({ tbody: table.tBodies && table.tBodies[0], idx: idx });
+    }
+    for (var m = 0; m < masked.length; m++) {
+      var body = masked[m].tbody;
+      if (!body) continue;
+      for (var r = 0; r < body.rows.length; r++) hideMatchingCells(body.rows[r], [masked[m].idx]);
+    }
+
+    /* 4. Any approve / reject / resolve / mark / close / delete / raise
+          control inside <main> (static now, or injected later). */
+    var MUTATION = /approve|reject|resolve|mark|close|delete|remove|issue|undo|raise|verify/i;
+    function scanMutations(root) {
+      try {
+        var nodes = (root || document).querySelectorAll(
+          'main button, main input[type="submit"], main input[type="button"], main .ok-btn, main .del-btn, main .danger-btn, main a.btn-primary, main a.btn-secondary'
+        );
+        for (var n = 0; n < nodes.length; n++) {
+          var el = nodes[n];
+          if (el.id === "themeToggle" || el.id === "langSelect") continue;
+          var hay = (el.textContent || "") + " " + (el.value || "") + " " + (el.getAttribute("data-i18n") || "") + " " + (el.className || "");
+          if (MUTATION.test(hay)) hide(el);
+        }
+      } catch (e) {}
+    }
+    scanMutations(document);
+
+    /* 5. Keep the masks correct if campus-hub.js re-renders the rows. */
+    try {
+      if (window.MutationObserver) {
+        var obs = new MutationObserver(function () {
+          for (var m2 = 0; m2 < masked.length; m2++) {
+            var b = masked[m2].tbody;
+            if (!b) continue;
+            for (var r2 = 0; r2 < b.rows.length; r2++) hideMatchingCells(b.rows[r2], [masked[m2].idx]);
+          }
+          scanMutations(document);
+        });
+        obs.observe(document.body, { childList: true, subtree: true });
+      }
+    } catch (e) {}
+
+    /* 6. Explain the trimmed view. */
+    show(document.getElementById("opsReadOnlyNote"));
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", gateOpsForReadOnlyRole);
+  } else {
+    gateOpsForReadOnlyRole();
+  }
+
+  try { window.gateOpsForReadOnlyRole = gateOpsForReadOnlyRole; } catch (e) {}
+})();
+</script>
+</body></html>

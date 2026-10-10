@@ -1,0 +1,405 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Fees Management</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600&family=Noto+Sans+Devanagari:wght@400&display=swap">
+    <style>
+        /* Fee form only: 3 aligned rows (scoped to #feeForm) */
+        #feeForm {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        #feeForm .fee-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            align-items: end;
+            min-width: 0;
+        }
+        #feeForm .fee-row-action {
+            grid-template-columns: 1fr 1fr auto;
+        }
+        #feeForm .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+        #feeForm .form-field label {
+            display: block;
+        }
+        #feeForm .form-field input,
+        #feeForm .form-field select {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #feeForm .add-student-btn {
+            grid-column: auto;
+            width: auto;
+            min-width: 150px;
+            height: 42px;
+            padding: 0 16px;
+            white-space: nowrap;
+            align-self: end;
+            justify-self: center;
+            text-align: center;
+        }
+        @media (max-width: 700px) {
+            #feeForm .fee-row,
+            #feeForm .fee-row-action {
+                grid-template-columns: 1fr;
+            }
+            #feeForm .add-student-btn {
+                width: 100%;
+                min-width: 0;
+                align-self: stretch;
+                justify-self: stretch;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="campus-dashboard">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar-placeholder"></aside>
+
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        
+        <div class="thin-topbar no-print"><span class="net-status"><span id="netBadge" class="net-badge net-online">● Online</span></span>
+<select id="langSelect" class="btn-secondary" onchange="setLanguage(this.value)"><option value="en">English</option><option value="hi">हिंदी</option></select>
+<button id="themeToggle" class="btn-secondary" onclick="toggleTheme()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg><span>Dark</span></button>
+</div>
+<header class="admin-header page-header">
+
+            <div>
+                <h1 data-i18n="academic.fees.title">Fees Management</h1>
+
+                <p data-i18n="academic.fees.subtitle">
+                    Manage student fees, payments and outstanding dues.
+                </p>
+            </div>
+
+        </header>
+
+
+        <!-- FEE SUMMARY -->
+        <section class="fee-summary">
+
+            <div class="fee-summary-card">
+                <h3 data-i18n="academic.fees.sumTotal">Total Fees</h3>
+                <p id="totalFees">₹0</p>
+            </div>
+
+            <div class="fee-summary-card">
+                <h3 data-i18n="academic.fees.sumPaid">Total Paid</h3>
+                <p id="totalPaid">₹0</p>
+            </div>
+
+            <div class="fee-summary-card">
+                <h3 data-i18n="academic.fees.sumDue">Total Due</h3>
+                <p id="totalDue">₹0</p>
+            </div>
+
+            <div class="fee-summary-card">
+                <h3 data-i18n="academic.fees.sumPending">Pending Students</h3>
+                <p id="pendingStudents">0</p>
+            </div>
+
+        </section>
+
+
+        <!-- ADD FEE -->
+        <section class="management-card">
+
+            <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg><span data-i18n="academic.fees.addTitle">Add Fee Record</span></h2>
+
+            <form id="feeForm" class="management-form">
+
+                <div class="fee-row">
+                    <div class="form-field">
+                        <label for="feeStudentName" data-i18n="academic.fees.lblStudent">Student Name</label>
+                        <input
+                            type="text"
+                            id="feeStudentName"
+                            data-i18n-ph="academic.fees.phStudent" placeholder="Student Name"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-field">
+                        <label for="feeStudentId" data-i18n="academic.fees.lblStudentId">Student ID</label>
+                        <input
+                            type="text"
+                            id="feeStudentId"
+                            data-i18n-ph="academic.fees.phStudentId" placeholder="Student ID"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-field">
+                        <label for="feeSemester" data-i18n="academic.fees.lblSem">Semester</label>
+                        <select id="feeSemester" required>
+
+                            <option value="" data-i18n="academic.fees.selectSem">
+                                Select Semester
+                            </option>
+
+                            <option data-i18n="academic.fees.sem1">1st Semester</option>
+                            <option data-i18n="academic.fees.sem2">2nd Semester</option>
+                            <option data-i18n="academic.fees.sem3">3rd Semester</option>
+                            <option data-i18n="academic.fees.sem4">4th Semester</option>
+                            <option data-i18n="academic.fees.sem5">5th Semester</option>
+                            <option data-i18n="academic.fees.sem6">6th Semester</option>
+                            <option data-i18n="academic.fees.sem7">7th Semester</option>
+                            <option data-i18n="academic.fees.sem8">8th Semester</option>
+
+                        </select>
+                    </div>
+                </div>
+
+
+                <div class="fee-row">
+                    <div class="form-field">
+                        <label for="tuitionFee" data-i18n="academic.fees.lblTuition">Tuition Fee</label>
+                        <input
+                            type="number"
+                            id="tuitionFee"
+                            data-i18n-ph="academic.fees.phTuition" placeholder="Tuition Fee"
+                            min="0"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-field">
+                        <label for="hostelFee" data-i18n="academic.fees.lblHostel">Hostel Fee</label>
+                        <input
+                            type="number"
+                            id="hostelFee"
+                            data-i18n-ph="academic.fees.phHostel" placeholder="Hostel Fee"
+                            min="0"
+                            value="0"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-field">
+                        <label for="examFee" data-i18n="academic.fees.lblOther">Other Fee</label>
+                        <input
+                            type="number"
+                            id="examFee"
+                            data-i18n-ph="academic.fees.phExam" placeholder="Examination Fee"
+                            min="0"
+                            value="0"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <div class="fee-row fee-row-action">
+                    <div class="form-field">
+                        <label for="paidAmount" data-i18n="academic.fees.lblPaid">Amount Paid</label>
+                        <input
+                            type="number"
+                            id="paidAmount"
+                            data-i18n-ph="academic.fees.phPaid" placeholder="Amount Paid"
+                            min="0"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-field">
+                        <label for="dueAmount" data-i18n="academic.fees.lblDue">Amount Due</label>
+                        <input
+                            type="number"
+                            id="dueAmount"
+                            data-i18n-ph="academic.fees.phDue" placeholder="Auto-calculated"
+                            min="0"
+                            readonly
+                            tabindex="-1"
+                        >
+                    </div>
+
+                    <button type="submit" class="add-student-btn" data-i18n="academic.fees.addBtn">
+                        Add Fee Record
+                    </button>
+                </div>
+
+            </form>
+
+        </section>
+
+
+        <!-- SEARCH -->
+        <section class="management-card">
+
+            <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span data-i18n="academic.fees.searchTitle">Search Fee Records</span></h2>
+
+            <div class="search-row">
+
+                <input
+                    type="text"
+                    id="feeSearch"
+                    class="search-input"
+                    data-i18n-ph="academic.fees.searchPh" placeholder="Search by student name or ID..."
+                    onkeyup="searchFees()"
+                >
+
+                <select
+                    id="feeStatusFilter"
+                    class="search-input"
+                    onchange="searchFees()"
+                >
+
+                    <option value="" data-i18n="academic.fees.filterAll">
+                        All Status
+                    </option>
+
+                    <option value="Paid" data-i18n="academic.fees.filterPaid">
+                        Paid
+                    </option>
+
+                    <option value="Partial" data-i18n="academic.fees.filterPartial">
+                        Partial
+                    </option>
+
+                    <option value="Pending" data-i18n="academic.fees.filterPending">
+                        Pending
+                    </option>
+
+                </select>
+
+            </div>
+
+        </section>
+
+
+        <!-- FEE TABLE -->
+        <section class="management-card">
+
+            <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg><span data-i18n="academic.fees.listTitle">Fee Records</span></h2>
+
+            <div class="table-container student-table-wrapper">
+
+                <table class="management-table">
+
+                    <thead>
+
+                        <tr>
+                            <th data-i18n="academic.fees.thStudent">Student</th>
+                            <th data-i18n="academic.fees.thStudentId">Student ID</th>
+                            <th data-i18n="academic.fees.thSem">Semester</th>
+                            <th data-i18n="academic.fees.thTotal">Total Fee</th>
+                            <th data-i18n="academic.fees.thPaid">Paid</th>
+                            <th data-i18n="academic.fees.thDue">Due</th>
+                            <th data-i18n="academic.fees.thStatus">Status</th>
+                            <th data-i18n="academic.fees.thAction">Action</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="feeTableBody"></tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+        <!-- FEE QUERIES (no counter queue) -->
+        <section class="management-card">
+            <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg><span data-i18n="academic.fees.qTitle">Fee queries — ask accounts without visiting office</span></h2>
+            <form id="feeQueryForm" class="management-form">
+                <input type="text" id="fqSid" data-i18n-ph="academic.fees.qSidPh" placeholder="Student ID">
+                <select id="fqTopic" required><option value="" data-i18n="academic.fees.qTopic">Topic</option><option data-i18n="academic.fees.qTopic1">Tuition mismatch</option><option data-i18n="academic.fees.qTopic2">Hostel fee</option><option data-i18n="academic.fees.qTopic3">Scholarship not applied</option><option data-i18n="academic.fees.qTopic4">Receipt missing</option><option data-i18n="academic.fees.qTopic5">Fine waiver</option></select>
+                <textarea id="fqText" data-i18n-ph="academic.fees.qTextPh" placeholder="Details (e.g. paid Rs 25,000 on 2 Oct, UTR …)" required></textarea>
+                <button type="submit" class="add-student-btn" data-i18n="academic.fees.qBtn">Raise query</button>
+            </form><p id="fqMsg" class="form-message"></p>
+            <div class="table-container student-table-wrapper"><table class="management-table"><thead><tr><th data-i18n="academic.fees.qThId">ID</th><th data-i18n="academic.fees.qThStudent">Student</th><th data-i18n="academic.fees.qThQuery">Query</th><th data-i18n="academic.fees.qThStatus">Status</th><th data-i18n="academic.fees.qThAction">Action</th></tr></thead>
+            <tbody id="feeQueryBody"></tbody></table></div>
+            <p><small>Full analytics in <a href="ops-dashboard.html">Ops Insights</a>.</small></p>
+        </section>
+
+    </main>
+
+</div>
+
+
+<script src="seed-01-people.js"></script>
+<script src="seed-02-timetable.js"></script>
+<script src="seed-03-fees.js"></script>
+<script src="seed-04-academic.js"></script>
+<script src="seed-05-campus.js"></script>
+<script src="seed-06-hub.js"></script>
+<script src="seed-07-notices.js"></script>
+<script src="script.js"></script>
+<script src="campus-hub.js"></script>
+<script src="campus-sidebar.js"></script>
+<script src="progress.js"></script>
+<script src="lang.js"></script><script src="lang-academic.js"></script>
+<script>
+(function () {
+    var form = document.getElementById("feeForm");
+    if (!form) return;
+    var tuition = document.getElementById("tuitionFee");
+    var hostel = document.getElementById("hostelFee");
+    var exam = document.getElementById("examFee");
+    var paid = document.getElementById("paidAmount");
+    var due = document.getElementById("dueAmount");
+    if (!tuition || !hostel || !exam || !paid || !due) return;
+    function updateDue() {
+        var total = (Number(tuition.value) || 0) + (Number(hostel.value) || 0) + (Number(exam.value) || 0);
+        var paidVal = Number(paid.value) || 0;
+        var d = total - paidVal;
+        due.value = d > 0 ? d : (paid.value === "" && total === 0 ? "" : 0);
+        if (paid.value === "" && tuition.value === "" && hostel.value === "" && exam.value === "") due.value = "";
+    }
+    ["input", "change"].forEach(function (evt) {
+        tuition.addEventListener(evt, updateDue);
+        hostel.addEventListener(evt, updateDue);
+        exam.addEventListener(evt, updateDue);
+        paid.addEventListener(evt, updateDue);
+    });
+    form.addEventListener("reset", function () { due.value = ""; });
+})();
+/* feeForm submit (addFee) + deleteFee confirm remain in script.js */
+</script>
+
+<script>
+/* Student view: hide admin-only create forms (students keep view-only tables + query forms). Additive; no handlers changed. */
+document.addEventListener("DOMContentLoaded", function () {
+  try {
+    var s = null;
+    try { s = JSON.parse(localStorage.getItem("campusSession") || "null"); } catch (e) { s = null; }
+    if (!s || s.role !== "Student") return;
+    function hideFormSection(formId) {
+      try {
+        var f = document.getElementById(formId);
+        if (!f) return;
+        var sec = f.closest ? f.closest("section") : null;
+        if (sec) sec.style.display = "none";
+      } catch (e) {}
+    }
+    hideFormSection("feeForm");
+  } catch (e) {}
+});
+</script>
+</body>
+</body>
+</html>
+

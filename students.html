@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Student Management</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600&family=Noto+Sans+Devanagari:wght@400&display=swap">
+</head>
+
+<body>
+
+<div class="campus-dashboard">
+
+    <!-- Sidebar -->
+    <aside class="sidebar-placeholder"></aside>
+
+
+    <!-- Main -->
+    <main class="main-content">
+
+        
+        <div class="thin-topbar no-print"><span class="net-status"><span id="netBadge" class="net-badge net-online" data-i18n="common.online">● Online</span></span>
+<select id="langSelect" class="btn-secondary" onchange="setLanguage(this.value)"><option value="en">English</option><option value="hi">हिंदी</option></select>
+<button id="themeToggle" class="btn-secondary" onclick="toggleTheme()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span data-i18n="common.darkMode">Dark</span></button></div>
+<header class="admin-header page-header">
+
+            <div>
+                <h1 data-i18n="admin.students.title">Student Management</h1>
+                <p data-i18n="admin.students.subtitle">Add and manage campus students.</p>
+            </div>
+
+        </header>
+
+
+        <!-- Add Student -->
+        <section class="student-form-section management-card">
+
+            <div class="admin-section-title">
+                <h2 data-i18n="admin.students.addTitle">Add New Student</h2>
+            </div>
+
+            <form id="studentForm">
+
+                <div class="student-form-grid">
+
+                    <div>
+                        <label for="studentName" data-i18n="admin.students.fullName">Full Name</label>
+                        <input
+                            type="text"
+                            id="studentName"
+                            placeholder="Enter student name" data-i18n-ph="admin.students.phName"
+                            required
+                        >
+                    </div>
+
+                    <div>
+                        <label for="studentId" data-i18n="admin.students.studentId">Student ID</label>
+                        <input
+                            type="text"
+                            id="studentId"
+                            placeholder="e.g. STU001" data-i18n-ph="admin.students.phId"
+                            required
+                        >
+                    </div>
+
+                    <div>
+                        <label for="studentEmail" data-i18n="admin.students.email">Email</label>
+                        <input
+                            type="email"
+                            id="studentEmail"
+                            placeholder="student@email.com" data-i18n-ph="admin.students.phEmail"
+                            required
+                        >
+                    </div>
+
+                    <div>
+                        <label for="studentDepartment" data-i18n="admin.students.department">Department</label>
+
+                        <select id="studentDepartment" required>
+                            <option value="" data-i18n="admin.students.selDept">Select Department</option>
+                            <option>Computer Science</option>
+                            <option>Information Technology</option>
+                            <option>Mechanical Engineering</option>
+                            <option>Electrical Engineering</option>
+                            <option>Civil Engineering</option>
+                            <option>Business Administration</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="studentSemester" data-i18n="admin.students.semester">Semester</label>
+
+                        <select id="studentSemester" required>
+                            <option value="" data-i18n="admin.students.selSem">Select Semester</option>
+                            <option>1st Semester</option>
+                            <option>2nd Semester</option>
+                            <option>3rd Semester</option>
+                            <option>4th Semester</option>
+                            <option>5th Semester</option>
+                            <option>6th Semester</option>
+                            <option>7th Semester</option>
+                            <option>8th Semester</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <button type="submit" class="add-student-btn">
+                    <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span data-i18n="admin.students.addStudent">Add Student</span>
+                </button>
+
+            </form>
+
+            <p id="studentMessage" class="form-message"></p>
+
+        </section>
+
+
+        <!-- Student List -->
+        <section class="student-list-section management-card">
+
+            <div class="student-list-header">
+
+                <div>
+                    <h2 data-i18n="admin.students.listTitle">Student List</h2>
+                    <p id="studentCount" data-i18n="admin.students.countPrefix">0 students</p>
+                </div>
+
+                <input
+                    type="text"
+                    id="studentSearch"
+                    class="search-input"
+                    placeholder="Search students..." data-i18n-ph="admin.students.searchPh"
+                    oninput="searchStudents()"
+                >
+
+            </div>
+
+
+            <div class="student-table-wrapper table-container">
+
+                <table class="management-table">
+
+                    <thead>
+                        <tr>
+                            <th data-i18n="admin.students.thId">ID</th>
+                            <th data-i18n="admin.students.thName">Name</th>
+                            <th data-i18n="admin.students.thEmail">Email</th>
+                            <th data-i18n="admin.students.thDept">Department</th>
+                            <th data-i18n="admin.students.thSem">Semester</th>
+                            <th data-i18n="admin.students.thAction">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="studentTableBody">
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script src="seed-01-people.js"></script>
+<script src="seed-02-timetable.js"></script>
+<script src="seed-03-fees.js"></script>
+<script src="seed-04-academic.js"></script>
+<script src="seed-05-campus.js"></script>
+<script src="seed-06-hub.js"></script>
+<script src="seed-07-notices.js"></script>
+<script src="script.js"></script><script src="campus-hub.js"></script><script src="campus-sidebar.js"></script><script src="lang.js"></script><script src="lang-admin.js"></script>
+
+<script>
+/* Student safety net: pageRoles already excludes Student; if one lands here, hide the add form + Action column. Additive; no handlers changed. */
+document.addEventListener("DOMContentLoaded", function () {
+  try {
+    var s = null;
+    try { s = JSON.parse(localStorage.getItem("campusSession") || "null"); } catch (e) { s = null; }
+    if (!s || s.role !== "Student") return;
+    var f = document.getElementById("studentForm");
+    if (f && f.closest) { var sec = f.closest("section"); if (sec) sec.style.display = "none"; }
+    try {
+      var st = document.createElement("style");
+      st.textContent = ".student-list-section .management-table th:last-child,.student-list-section .management-table td:last-child{display:none}";
+      document.head.appendChild(st);
+    } catch (e) {}
+  } catch (e) {}
+});
+</script>
+
+</body>
+</html>

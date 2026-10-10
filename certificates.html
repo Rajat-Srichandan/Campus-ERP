@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Certificates - Campus Hub</title><link rel="stylesheet" href="style.css">
+    <style>
+        /* Scoped: Certificate request header + submit at extreme top-right */
+        .cert-create-card .cert-create-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+        .cert-create-card .cert-create-head h2{margin:0;display:flex;align-items:center;gap:8px}
+        .cert-create-card .cert-create-btn{width:auto;flex:0 0 auto;padding:11px 18px;background:#2563eb;color:#fff;border:0;border-radius:8px;font-weight:700;cursor:pointer}
+        .cert-create-card .cert-create-btn:hover{background:#1d4ed8}
+        /* Row1 (Name + Student ID + Type) in SAME row (3 equal cols) */
+        #certForm{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;align-items:start}
+        #certForm .form-field{min-width:0}
+        #certForm .cert-row-3{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;min-width:0}
+        /* Row2: Purpose full-width */
+        #certForm .cert-row-full{grid-column:1/-1;min-width:0}
+        @media(max-width:600px){.cert-create-card .cert-create-head{flex-direction:column;align-items:stretch}.cert-create-card .cert-create-btn{width:100%}}
+        @media(max-width:700px){#certForm{grid-template-columns:1fr}#certForm .cert-row-3{grid-template-columns:1fr}}
+        /* Scoped: Cert Requests Action cell — Issue left + Reject extreme right (mirrors .req-actions pattern) */
+        /* Additive only, vanilla CSS. td stays table-cell so borders/row alignment intact. Handlers untouched. */
+        #certTableBody td:last-child{display:table-cell;padding:12px 14px;min-width:190px;white-space:nowrap;vertical-align:middle}
+        #certTableBody .cert-actions{display:flex;width:100%;align-items:center;justify-content:flex-start;flex-wrap:nowrap;white-space:nowrap;gap:12px;row-gap:12px}
+        #certTableBody .cert-actions>:last-child{margin-left:auto}
+        #certTableBody td:last-child .ok-btn,#certTableBody td:last-child .no-btn{flex-shrink:0;white-space:nowrap}
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600&family=Noto+Sans+Devanagari:wght@400&display=swap"></head>
+<body>
+<div class="campus-dashboard">
+<aside class="sidebar-placeholder"></aside>
+<main class="main-content">
+<div class="thin-topbar no-print"><span class="net-status"><span id="netBadge" class="net-badge net-online">● Online</span></span>
+<select id="langSelect" class="btn-secondary" onchange="setLanguage(this.value)"><option value="en">English</option><option value="hi">हिंदी</option></select>
+<button id="themeToggle" class="btn-secondary" onclick="toggleTheme()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span>Dark</span></button>
+</div>
+<div class="page-header"><div><h1 data-i18n="hub.certificates.title">Certificates</h1><p data-i18n="hub.certificates.subtitle">Bonafide, character, transcript, migration, no-dues — no printed forms.</p></div></div>
+<section class="management-card cert-create-card"><div class="cert-create-head"><h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg><span data-i18n="hub.certificates.newReq">Request certificate</span></h2><button type="submit" form="certForm" class="btn-primary cert-create-btn" data-i18n="hub.certificates.submitBtn">Request</button></div>
+<form id="certForm" class="management-form">
+<div class="cert-row-3"><div class="form-field"><label for="certName" data-i18n="hub.certificates.lblName">Name</label><input type="text" id="certName" placeholder="Name (auto-filled)" data-i18n-ph="hub.certificates.phName"></div>
+<div class="form-field"><label for="certSid" data-i18n="hub.certificates.lblSid">Student ID</label><input type="text" id="certSid" placeholder="Student ID (auto-filled)" data-i18n-ph="hub.certificates.phSid"></div>
+<div class="form-field"><label for="certType" data-i18n="hub.certificates.lblType">Certificate type</label><select id="certType" required><option value="" data-i18n="hub.certificates.selType">Select certificate</option><option data-i18n="hub.certificates.optBonafide">Bonafide</option><option data-i18n="hub.certificates.optCharacter">Character</option><option data-i18n="hub.certificates.optTranscript">Transcript</option><option data-i18n="hub.certificates.optMigration">Migration</option><option data-i18n="hub.certificates.optNoDues">No-Dues</option><option data-i18n="hub.certificates.optFeeCopy">Fee Receipt copy</option></select></div></div>
+<div class="form-field cert-row-full" style="grid-column:1/-1"><label for="certPurpose" data-i18n="hub.certificates.lblPurpose">Purpose</label><textarea id="certPurpose" placeholder="Purpose (e.g. scholarship, internship, passport)" data-i18n-ph="hub.certificates.phPurpose" style="grid-column:1/-1" required></textarea></div>
+</form><p id="certMsg"></p></section>
+<section class="management-card"><h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg><span data-i18n="hub.certificates.listTitle">Requests (Admin issues in 1 click, student prints)</span></h2>
+<div class="table-container"><table><thead><tr><th data-i18n="hub.certificates.thId">ID</th><th data-i18n="hub.certificates.thStudent">Student</th><th data-i18n="hub.certificates.thType">Type</th><th data-i18n="hub.certificates.thPurpose">Purpose</th><th data-i18n="hub.certificates.thStatus">Status</th><th data-i18n="hub.certificates.thAction">Action</th></tr></thead>
+<tbody id="certTableBody"></tbody></table></div></section>
+</main></div>
+<script src="seed-01-people.js"></script>
+<script src="seed-02-timetable.js"></script>
+<script src="seed-03-fees.js"></script>
+<script src="seed-04-academic.js"></script>
+<script src="seed-05-campus.js"></script>
+<script src="seed-06-hub.js"></script>
+<script src="seed-07-notices.js"></script>
+<script src="script.js"></script><script src="campus-hub.js"></script>
+<script src="campus-sidebar.js"></script>
+<script src="lang.js"></script>
+</body></html>

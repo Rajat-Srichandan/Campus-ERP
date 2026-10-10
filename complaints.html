@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hostel Complaints - Campus Hub</title><link rel="stylesheet" href="style.css">
+    <style>
+        /* Scoped: Complaint submit header + button at extreme top-right */
+        .comp-create-card .comp-create-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+        .comp-create-card .comp-create-head h2{margin:0;display:flex;align-items:center;gap:8px}
+        .comp-create-card .comp-create-btn{width:auto;flex:0 0 auto;padding:11px 18px;background:#2563eb;color:#fff;border:0;border-radius:8px;font-weight:700;cursor:pointer}
+        .comp-create-card .comp-create-btn:hover{background:#1d4ed8}
+        @media(max-width:600px){.comp-create-card .comp-create-head{flex-direction:column;align-items:stretch}.comp-create-card .comp-create-btn{width:100%}}
+        /* Scoped: #complaintForm rows — Row1 3 cols, Row2 full-width */
+        #complaintForm{display:grid;grid-template-columns:1fr;gap:10px}
+        #complaintForm .comp-row-1{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+        #complaintForm .comp-row-2{display:grid;grid-template-columns:1fr;gap:10px}
+        #complaintForm .form-field{display:flex;flex-direction:column;gap:6px;min-width:0}
+        #complaintForm .form-field textarea{width:100%;min-height:90px;resize:vertical}
+        @media(max-width:700px){#complaintForm .comp-row-1{grid-template-columns:1fr}}
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600&family=Noto+Sans+Devanagari:wght@400&display=swap"></head>
+<body>
+<div class="campus-dashboard">
+<aside class="sidebar-placeholder"></aside>
+<main class="main-content">
+<div class="thin-topbar no-print"><span class="net-status"><span id="netBadge" class="net-badge net-online">● Online</span></span>
+<select id="langSelect" class="btn-secondary" onchange="setLanguage(this.value)"><option value="en">English</option><option value="hi">हिंदी</option></select>
+<button id="themeToggle" class="btn-secondary" onclick="toggleTheme()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span>Dark</span></button>
+</div>
+<div class="page-header"><div><h1 data-i18n="hub.complaints.title">Hostel Complaints</h1><p data-i18n="hub.complaints.subtitle">Track status, SLA & resolution time. No registers, no WhatsApp follow-ups.</p></div></div>
+<section class="management-card comp-create-card"><div class="comp-create-head"><h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg><span data-i18n="hub.complaints.newTitle">New complaint (2 taps, low-data)</span></h2><button type="submit" form="complaintForm" class="btn-primary comp-create-btn" data-i18n="hub.complaints.submitBtn">Log complaint</button></div>
+<form id="complaintForm" class="management-form">
+<div class="comp-row-1"><div class="form-field"><label for="compCategory" data-i18n="hub.complaints.lblCat">Category</label><select id="compCategory" required><option value="" data-i18n="hub.complaints.selCat">Category</option><option data-i18n="hub.complaints.optElectrical">Electrical</option><option data-i18n="hub.complaints.optPlumbing">Plumbing</option><option data-i18n="hub.complaints.optCleaning">Cleaning</option><option data-i18n="hub.complaints.optWifi">WiFi</option><option data-i18n="hub.complaints.optFood">Food</option><option data-i18n="hub.complaints.optOther">Other</option></select></div>
+<div class="form-field"><label for="compHostel" data-i18n="hub.complaints.lblHostel">Hostel block</label><input type="text" id="compHostel" placeholder="Hostel block (e.g. BH-2)" data-i18n-ph="hub.complaints.phHostel"></div>
+<div class="form-field"><label for="compRoom" data-i18n="hub.complaints.lblRoom">Room no.</label><input type="text" id="compRoom" placeholder="Room no." data-i18n-ph="hub.complaints.phRoom"></div></div>
+<div class="comp-row-2"><div class="form-field"><label for="compDesc" data-i18n="hub.complaints.lblDesc">Describe issue</label><textarea id="compDesc" placeholder="Describe issue (e.g. fan not working since yesterday)" data-i18n-ph="hub.complaints.phDesc" required></textarea></div></div>
+</form><p id="compMsg"></p>
+<p><small data-i18n="hub.complaints.slaNote">SLA: Cleaning/Food 12h · Electrical/Plumbing 24h · WiFi 48h · Other 72h</small></p></section>
+<section class="management-card"><h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span data-i18n="hub.complaints.trackTitle">Track & resolve</span></h2>
+<div class="search-row"><div class="form-field"><label for="complaintSearch" data-i18n="hub.complaints.lblSearch">Search complaints</label><input type="text" id="complaintSearch" placeholder="Search category, room, text..." data-i18n-ph="hub.complaints.phSearch" onkeyup="displayComplaints()"></div>
+<div class="form-field"><label for="complaintFilter" data-i18n="hub.complaints.lblFilter">Status / Category</label><select id="complaintFilter" onchange="displayComplaints()"><option value="" data-i18n="hub.complaints.optAll">All</option><option value="Open" data-i18n="hub.complaints.optOpen">Open</option><option value="In-Progress" data-i18n="hub.complaints.optProg">In-Progress</option><option value="Resolved" data-i18n="hub.complaints.optResolved">Resolved</option><option data-i18n="hub.complaints.optElectricalF">Electrical</option><option data-i18n="hub.complaints.optPlumbingF">Plumbing</option><option data-i18n="hub.complaints.optCleaningF">Cleaning</option><option data-i18n="hub.complaints.optWifiF">WiFi</option></select></div></div>
+<div class="table-container"><table><thead><tr><th data-i18n="hub.complaints.thId">ID</th><th data-i18n="hub.complaints.thCatRoom">Category / Room</th><th data-i18n="hub.complaints.thDesc">Description</th><th data-i18n="hub.complaints.thStatus">Status</th><th data-i18n="hub.complaints.thResolveTime">Resolve time</th><th data-i18n="hub.complaints.thAction">Action</th></tr></thead>
+<tbody id="complaintTableBody"></tbody></table></div></section>
+</main></div>
+<script src="seed-01-people.js"></script>
+<script src="seed-02-timetable.js"></script>
+<script src="seed-03-fees.js"></script>
+<script src="seed-04-academic.js"></script>
+<script src="seed-05-campus.js"></script>
+<script src="seed-06-hub.js"></script>
+<script src="seed-07-notices.js"></script>
+<script src="script.js"></script><script src="campus-hub.js"></script>
+<script src="campus-sidebar.js"></script>
+<script src="lang.js"></script>
+</body></html>

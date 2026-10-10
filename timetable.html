@@ -1,0 +1,267 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timetable Management</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600&family=Noto+Sans+Devanagari:wght@400&display=swap">
+    <style>
+        /* Timetable form only: Row2 (Day + Room + Semester), Row3 (Start + End + Button) */
+        #timetableForm .timetable-row {
+            grid-column: 1 / -1;
+            display: grid;
+            gap: 12px;
+            min-width: 0;
+        }
+        #timetableForm .timetable-row-2 {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+        #timetableForm .timetable-row-3 {
+            grid-template-columns: 1fr 1fr auto;
+            align-items: end;
+        }
+        #timetableForm .timetable-row .form-field {
+            min-width: 0;
+        }
+        #timetableForm .timetable-row-3 .add-student-btn {
+            grid-column: auto;
+            width: auto;
+            white-space: nowrap;
+            align-self: end;
+        }
+        @media (max-width: 700px) {
+            #timetableForm .timetable-row-2,
+            #timetableForm .timetable-row-3 {
+                grid-template-columns: 1fr;
+            }
+            #timetableForm .timetable-row-3 .add-student-btn {
+                width: 100%;
+                align-self: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="campus-dashboard">
+
+    <aside class="sidebar-placeholder"></aside>
+
+    <main class="main-content">
+
+        
+        <div class="thin-topbar no-print"><span class="net-status"><span id="netBadge" class="net-badge net-online">● Online</span></span>
+<select id="langSelect" class="btn-secondary" onchange="setLanguage(this.value)"><option value="en">English</option><option value="hi">हिंदी</option></select>
+<button id="themeToggle" class="btn-secondary" onclick="toggleTheme()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg><span>Dark</span></button></div>
+<header class="admin-header page-header">
+            <div>
+                <h1 data-i18n="academic.timetable.title">Timetable Management</h1>
+                <p data-i18n="academic.timetable.subtitle">Create and manage campus class schedules.</p>
+            </div>
+        </header>
+
+        <!-- Add Timetable -->
+        <section class="management-card">
+
+            <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg><span data-i18n="academic.timetable.addTitle">Add Class Schedule</span></h2>
+
+            <form id="timetableForm" class="management-form">
+
+                <div class="form-field">
+                    <label for="timetableCourse" data-i18n="academic.timetable.lblCourse">Course Name</label>
+                    <input
+                        type="text"
+                        id="timetableCourse"
+                        data-i18n-ph="academic.timetable.phCourse" placeholder="Course Name"
+                        required
+                    >
+                </div>
+
+                <div class="form-field">
+                    <label for="timetableFaculty" data-i18n="academic.timetable.lblFaculty">Faculty Name</label>
+                    <input
+                        type="text"
+                        id="timetableFaculty"
+                        data-i18n-ph="academic.timetable.phFaculty" placeholder="Faculty Name"
+                        required
+                    >
+                </div>
+
+                <div class="timetable-row timetable-row-2">
+                    <div class="form-field">
+                        <label for="timetableDay" data-i18n="academic.timetable.lblDay">Day</label>
+                        <select id="timetableDay" required>
+                            <option value="" data-i18n="academic.timetable.selectDay">Select Day</option>
+                            <option data-i18n="academic.timetable.mon">Monday</option>
+                            <option data-i18n="academic.timetable.tue">Tuesday</option>
+                            <option data-i18n="academic.timetable.wed">Wednesday</option>
+                            <option data-i18n="academic.timetable.thu">Thursday</option>
+                            <option data-i18n="academic.timetable.fri">Friday</option>
+                            <option data-i18n="academic.timetable.sat">Saturday</option>
+                        </select>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="timetableRoom" data-i18n="academic.timetable.lblRoom">Room / Lab</label>
+                        <input
+                            type="text"
+                            id="timetableRoom"
+                            data-i18n-ph="academic.timetable.phRoom" placeholder="Room / Lab"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-field">
+                        <label for="timetableSemester" data-i18n="academic.timetable.lblSem">Semester</label>
+                        <select id="timetableSemester" required>
+                            <option value="" data-i18n="academic.timetable.selectSem">Select Semester</option>
+                            <option data-i18n="academic.timetable.sem1">1st Semester</option>
+                            <option data-i18n="academic.timetable.sem2">2nd Semester</option>
+                            <option data-i18n="academic.timetable.sem3">3rd Semester</option>
+                            <option data-i18n="academic.timetable.sem4">4th Semester</option>
+                            <option data-i18n="academic.timetable.sem5">5th Semester</option>
+                            <option data-i18n="academic.timetable.sem6">6th Semester</option>
+                            <option data-i18n="academic.timetable.sem7">7th Semester</option>
+                            <option data-i18n="academic.timetable.sem8">8th Semester</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="timetable-row timetable-row-3">
+                    <div class="form-field">
+                        <label for="startTime" data-i18n="academic.timetable.lblStart">Start Time</label>
+                        <input
+                            type="time"
+                            id="startTime"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-field">
+                        <label for="endTime" data-i18n="academic.timetable.lblEnd">End Time</label>
+                        <input
+                            type="time"
+                            id="endTime"
+                            required
+                        >
+                    </div>
+
+                    <button type="submit" class="add-student-btn" data-i18n="academic.timetable.addBtn">Add Schedule</button>
+                </div>
+
+            </form>
+
+        </section>
+
+        <!-- Filters -->
+        <section class="management-card">
+
+            <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span data-i18n="academic.timetable.searchTitle">Search Timetable</span></h2>
+
+            <div class="search-row">
+
+                <input
+                    type="text"
+                    id="timetableSearch"
+                    class="search-input"
+                    data-i18n-ph="academic.timetable.searchPh" placeholder="Search course or faculty..."
+                    onkeyup="searchTimetable()"
+                >
+
+                <select id="dayFilter" class="search-input" onchange="searchTimetable()">
+                    <option value="" data-i18n="academic.timetable.allDays">All Days</option>
+                    <option data-i18n="academic.timetable.mon">Monday</option>
+                    <option data-i18n="academic.timetable.tue">Tuesday</option>
+                    <option data-i18n="academic.timetable.wed">Wednesday</option>
+                    <option data-i18n="academic.timetable.thu">Thursday</option>
+                    <option data-i18n="academic.timetable.fri">Friday</option>
+                    <option data-i18n="academic.timetable.sat">Saturday</option>
+                </select>
+
+                <select id="semesterFilter" class="search-input" onchange="searchTimetable()">
+                    <option value="" data-i18n="academic.timetable.allSem">All Semesters</option>
+                    <option data-i18n="academic.timetable.sem1">1st Semester</option>
+                    <option data-i18n="academic.timetable.sem2">2nd Semester</option>
+                    <option data-i18n="academic.timetable.sem3">3rd Semester</option>
+                    <option data-i18n="academic.timetable.sem4">4th Semester</option>
+                    <option data-i18n="academic.timetable.sem5">5th Semester</option>
+                    <option data-i18n="academic.timetable.sem6">6th Semester</option>
+                    <option data-i18n="academic.timetable.sem7">7th Semester</option>
+                    <option data-i18n="academic.timetable.sem8">8th Semester</option>
+                </select>
+
+            </div>
+
+        </section>
+
+        <!-- Timetable -->
+        <section class="management-card">
+
+            <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span data-i18n="academic.timetable.listTitle">Class Schedule</span></h2>
+
+            <div class="table-container student-table-wrapper">
+
+                <table class="management-table">
+                    <thead>
+                        <tr>
+                            <th data-i18n="academic.timetable.thCourse">Course</th>
+                            <th data-i18n="academic.timetable.thFaculty">Faculty</th>
+                            <th data-i18n="academic.timetable.thDay">Day</th>
+                            <th data-i18n="academic.timetable.thTime">Time</th>
+                            <th data-i18n="academic.timetable.thRoom">Room</th>
+                            <th data-i18n="academic.timetable.thSem">Semester</th>
+                            <th data-i18n="academic.timetable.thAction">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="timetableTableBody"></tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script src="seed-01-people.js"></script>
+<script src="seed-02-timetable.js"></script>
+<script src="seed-03-fees.js"></script>
+<script src="seed-04-academic.js"></script>
+<script src="seed-05-campus.js"></script>
+<script src="seed-06-hub.js"></script>
+<script src="seed-07-notices.js"></script>
+<script src="script.js"></script>
+<script src="campus-hub.js"></script>
+<script src="campus-sidebar.js"></script><script src="lang.js"></script><script src="lang-academic.js"></script>
+
+<script>
+/* Student view: hide admin-only create forms (students keep view-only tables + query forms). Additive; no handlers changed. */
+document.addEventListener("DOMContentLoaded", function () {
+  try {
+    var s = null;
+    try { s = JSON.parse(localStorage.getItem("campusSession") || "null"); } catch (e) { s = null; }
+    if (!s || s.role !== "Student") return;
+    function hideFormSection(formId) {
+      try {
+        var f = document.getElementById(formId);
+        if (!f) return;
+        var sec = f.closest ? f.closest("section") : null;
+        if (sec) sec.style.display = "none";
+      } catch (e) {}
+    }
+    hideFormSection("timetableForm");
+  } catch (e) {}
+});
+</script>
+</body>
+</body>
+</html>
+

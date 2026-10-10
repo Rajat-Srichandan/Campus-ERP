@@ -1,0 +1,420 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Examinations & Results</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600&family=Noto+Sans+Devanagari:wght@400&display=swap">
+    <style>
+        /* Scoped: Create Examination header + form rows */
+        .exam-create-card .exam-create-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+        .exam-create-card .exam-create-head h2{margin:0;display:flex;align-items:center;gap:8px}
+        .exam-create-card .exam-create-btn{width:auto;flex:0 0 auto;padding:11px 18px;background:#2563eb;color:#fff;border:0;border-radius:8px;font-weight:700;cursor:pointer}
+        .exam-create-card .exam-create-btn:hover{background:#1d4ed8}
+        .result-create-card .result-create-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+        .result-create-card .result-create-head h2{margin:0;display:flex;align-items:center;gap:8px}
+        .result-create-card .result-create-btn{width:auto;flex:0 0 auto;padding:11px 18px;background:#2563eb;color:#fff;border:0;border-radius:8px;font-weight:700;cursor:pointer}
+        .result-create-card .result-create-btn:hover{background:#1d4ed8}
+        /* Row1 (Exam Name + Course) keeps base 2-col .management-form grid */
+        #examForm{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;align-items:start}
+        #examForm .form-field{min-width:0}
+        /* Row2: Semester + Exam Date + Maximum Marks in SAME row (3 equal cols) */
+        #examForm .exam-row-3{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;min-width:0}
+        @media(max-width:600px){.exam-create-card .exam-create-head{flex-direction:column;align-items:stretch}.exam-create-card .exam-create-btn{width:100%}.result-create-card .result-create-head{flex-direction:column;align-items:stretch}.result-create-card .result-create-btn{width:100%}}
+        @media(max-width:700px){#examForm{grid-template-columns:1fr}#examForm .exam-row-3{grid-template-columns:1fr}}
+    </style>
+</head>
+
+<body>
+
+<div class="campus-dashboard">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar-placeholder"></aside>
+
+
+    <!-- MAIN -->
+    <main class="main-content">
+
+        
+        <div class="thin-topbar no-print"><span class="net-status"><span id="netBadge" class="net-badge net-online">● Online</span></span>
+<select id="langSelect" class="btn-secondary" onchange="setLanguage(this.value)"><option value="en">English</option><option value="hi">हिंदी</option></select>
+<button id="themeToggle" class="btn-secondary" onclick="toggleTheme()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg><span>Dark</span></button>
+</div>
+<div class="page-header">
+
+            <div>
+
+                <h1 data-i18n="academic.examinations.title">Examinations & Results</h1>
+
+                <p data-i18n="academic.examinations.subtitle">
+                    Manage examinations, marks and student results.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- EXAMINATION SUMMARY -->
+
+        <section class="exam-summary">
+
+            <div class="exam-summary-card">
+
+                <h3 data-i18n="academic.examinations.sumExams">Total Exams</h3>
+
+                <p id="totalExams">0</p>
+
+            </div>
+
+
+            <div class="exam-summary-card">
+
+                <h3 data-i18n="academic.examinations.sumResults">Total Results</h3>
+
+                <p id="totalResults">0</p>
+
+            </div>
+
+
+            <div class="exam-summary-card">
+
+                <h3 data-i18n="academic.examinations.sumPassed">Passed</h3>
+
+                <p id="totalPassed">0</p>
+
+            </div>
+
+
+            <div class="exam-summary-card">
+
+                <h3 data-i18n="academic.examinations.sumFailed">Failed</h3>
+
+                <p id="totalFailed">0</p>
+
+            </div>
+
+        </section>
+
+
+        <!-- ADD EXAM -->
+
+        <section class="management-card exam-create-card">
+
+            <div class="exam-create-head">
+                <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg><span data-i18n="academic.examinations.createTitle">Create Examination</span></h2>
+
+                <button type="submit" form="examForm" class="btn-primary exam-create-btn" data-i18n="academic.examinations.createBtn">
+                    Create Exam
+                </button>
+            </div>
+
+            <form id="examForm" class="management-form">
+
+                <div class="form-field">
+                    <label for="examName" data-i18n="academic.examinations.lblExam">Examination Name</label>
+                    <input
+                        type="text"
+                        id="examName"
+                        data-i18n-ph="academic.examinations.phExam" placeholder="Examination Name"
+                        required
+                    >
+                </div>
+
+                <div class="form-field">
+                    <label for="examCourse" data-i18n="academic.examinations.lblCourse">Course / Subject</label>
+                    <input
+                        type="text"
+                        id="examCourse"
+                        data-i18n-ph="academic.examinations.phCourse" placeholder="Course / Subject"
+                        required
+                    >
+                </div>
+
+                <div class="exam-row-3">
+                <div class="form-field">
+                    <label for="examSemester" data-i18n="academic.examinations.lblSem">Semester</label>
+                    <select id="examSemester" required>
+
+                        <option value="" data-i18n="academic.examinations.selectSem">
+                            Select Semester
+                        </option>
+
+                        <option data-i18n="academic.examinations.sem1">1st Semester</option>
+                        <option data-i18n="academic.examinations.sem2">2nd Semester</option>
+                        <option data-i18n="academic.examinations.sem3">3rd Semester</option>
+                        <option data-i18n="academic.examinations.sem4">4th Semester</option>
+                        <option data-i18n="academic.examinations.sem5">5th Semester</option>
+                        <option data-i18n="academic.examinations.sem6">6th Semester</option>
+                        <option data-i18n="academic.examinations.sem7">7th Semester</option>
+                        <option data-i18n="academic.examinations.sem8">8th Semester</option>
+
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label for="examDate" data-i18n="academic.examinations.lblDate">Exam Date</label>
+                    <input
+                        type="date"
+                        id="examDate"
+                        required
+                    >
+                </div>
+
+                <div class="form-field">
+                    <label for="examMaxMarks" data-i18n="academic.examinations.lblMax">Maximum Marks</label>
+                    <input
+                        type="number"
+                        id="examMaxMarks"
+                        data-i18n-ph="academic.examinations.phMax" placeholder="Maximum Marks"
+                        min="1"
+                        required
+                    >
+                </div>
+                </div>
+
+            </form>
+
+        </section>
+
+
+        <!-- ADD RESULT -->
+
+        <section class="management-card result-create-card">
+
+            <div class="result-create-head">
+            <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg><span data-i18n="academic.examinations.resTitle">Enter Student Result</span></h2>
+
+                <button type="submit" form="resultForm" class="btn-primary result-create-btn" data-i18n="academic.examinations.resBtn">
+                    Add Result
+                </button>
+            </div>
+
+            <form id="resultForm" class="management-form">
+
+                <div class="form-field">
+                    <label for="resultStudentName" data-i18n="academic.examinations.resLblStudent">Student Name</label>
+                    <input
+                        type="text"
+                        id="resultStudentName"
+                        data-i18n-ph="academic.examinations.resPhStudent" placeholder="Student Name"
+                        required
+                    >
+                </div>
+
+                <div class="form-field">
+                    <label for="resultStudentId" data-i18n="academic.examinations.resLblId">Student ID</label>
+                    <input
+                        type="text"
+                        id="resultStudentId"
+                        data-i18n-ph="academic.examinations.resPhId" placeholder="Student ID"
+                        required
+                    >
+                </div>
+
+                <div class="form-field">
+                    <label for="resultExam" data-i18n="academic.examinations.resLblExam">Examination Name</label>
+                    <input
+                        type="text"
+                        id="resultExam"
+                        data-i18n-ph="academic.examinations.resPhExam" placeholder="Examination Name"
+                        required
+                    >
+                </div>
+
+                <div class="form-field">
+                    <label for="resultSubject" data-i18n="academic.examinations.resLblSubject">Subject</label>
+                    <input
+                        type="text"
+                        id="resultSubject"
+                        data-i18n-ph="academic.examinations.resPhSubject" placeholder="Subject"
+                        required
+                    >
+                </div>
+
+                <div class="form-field">
+                    <label for="marksObtained" data-i18n="academic.examinations.resLblMarks">Marks Obtained</label>
+                    <input
+                        type="number"
+                        id="marksObtained"
+                        data-i18n-ph="academic.examinations.resPhMarks" placeholder="Marks Obtained"
+                        min="0"
+                        required
+                    >
+                </div>
+
+                <div class="form-field">
+                    <label for="resultMaxMarks" data-i18n="academic.examinations.resLblMax">Maximum Marks</label>
+                    <input
+                        type="number"
+                        id="resultMaxMarks"
+                        data-i18n-ph="academic.examinations.resPhMax" placeholder="Maximum Marks"
+                        min="1"
+                        required
+                    >
+                </div>
+
+            </form>
+
+        </section>
+
+
+        <!-- SEARCH -->
+
+        <section class="management-card">
+
+            <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span data-i18n="academic.examinations.searchTitle">Search Results</span></h2>
+
+            <div class="search-row">
+
+                <input
+                    type="text"
+                    id="resultSearch"
+                    data-i18n-ph="academic.examinations.searchPh" placeholder="Search student, ID, subject..."
+                    onkeyup="searchResults()"
+                >
+
+                <select
+                    id="resultStatusFilter"
+                    onchange="searchResults()"
+                >
+
+                    <option value="" data-i18n="academic.examinations.filterAll">
+                        All Results
+                    </option>
+
+                    <option value="Pass" data-i18n="academic.examinations.filterPass">
+                        Pass
+                    </option>
+
+                    <option value="Fail" data-i18n="academic.examinations.filterFail">
+                        Fail
+                    </option>
+
+                </select>
+
+            </div>
+
+        </section>
+
+
+        <!-- EXAMS TABLE -->
+
+        <section class="management-card">
+
+            <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span data-i18n="academic.examinations.schedTitle">Examination Schedule</span></h2>
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th data-i18n="academic.examinations.thExam">Exam</th>
+                            <th data-i18n="academic.examinations.thSubject">Subject</th>
+                            <th data-i18n="academic.examinations.thSem">Semester</th>
+                            <th data-i18n="academic.examinations.thDate">Date</th>
+                            <th data-i18n="academic.examinations.thMax">Max Marks</th>
+                            <th data-i18n="academic.examinations.thAction">Action</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="examTableBody"></tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+        <!-- RESULTS TABLE -->
+
+        <section class="management-card">
+
+            <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg><span data-i18n="academic.examinations.resListTitle">Student Results</span></h2>
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th data-i18n="academic.examinations.rThStudent">Student</th>
+                            <th data-i18n="academic.examinations.rThId">ID</th>
+                            <th data-i18n="academic.examinations.rThExam">Exam</th>
+                            <th data-i18n="academic.examinations.rThSubject">Subject</th>
+                            <th data-i18n="academic.examinations.rThMarks">Marks</th>
+                            <th data-i18n="academic.examinations.rThPct">Percentage</th>
+                            <th data-i18n="academic.examinations.rThGrade">Grade</th>
+                            <th data-i18n="academic.examinations.rThStatus">Status</th>
+                            <th data-i18n="academic.examinations.rThAction">Action</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="resultTableBody"></tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script src="seed-01-people.js"></script>
+<script src="seed-02-timetable.js"></script>
+<script src="seed-03-fees.js"></script>
+<script src="seed-04-academic.js"></script>
+<script src="seed-05-campus.js"></script>
+<script src="seed-06-hub.js"></script>
+<script src="seed-07-notices.js"></script>
+<script src="script.js"></script>
+<script src="campus-hub.js"></script>
+<script src="campus-sidebar.js"></script>
+<script src="lang.js"></script>
+<script src="lang-academic.js"></script>
+
+<script>
+/* Student view: hide admin-only create forms (students keep view-only tables + query forms). Additive; no handlers changed. */
+document.addEventListener("DOMContentLoaded", function () {
+  try {
+    var s = null;
+    try { s = JSON.parse(localStorage.getItem("campusSession") || "null"); } catch (e) { s = null; }
+    if (!s || s.role !== "Student") return;
+    function hideFormSection(formId) {
+      try {
+        var f = document.getElementById(formId);
+        if (!f) return;
+        var sec = f.closest ? f.closest("section") : null;
+        if (sec) sec.style.display = "none";
+      } catch (e) {}
+    }
+    hideFormSection("examForm");
+    hideFormSection("resultForm");
+  } catch (e) {}
+});
+</script>
+</body>
+</body>
+</html>
+

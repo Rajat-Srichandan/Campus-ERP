@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leave & Gate-Pass - Campus Hub</title><link rel="stylesheet" href="style.css">
+    <style>
+        /* Scoped: New request header + form rows */
+        .request-create-card .request-create-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+        .request-create-card .request-create-head h2{margin:0;display:flex;align-items:center;gap:8px}
+        .request-create-card .request-create-btn{width:auto;flex:0 0 auto;padding:11px 18px;background:#2563eb;color:#fff;border:0;border-radius:8px;font-weight:700;cursor:pointer}
+        .request-create-card .request-create-btn:hover{background:#1d4ed8}
+        /* Row1 (Name + Student ID) keeps base 2-col .management-form grid */
+        #requestForm{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;align-items:start}
+        #requestForm .form-field{min-width:0}
+        /* Row2: Request Type + From + To in SAME row (3 equal cols) */
+        #requestForm .request-row-3{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;min-width:0}
+        @media(max-width:600px){.request-create-card .request-create-head{flex-direction:column;align-items:stretch}.request-create-card .request-create-btn{width:100%}}
+        @media(max-width:700px){#requestForm{grid-template-columns:1fr}#requestForm .request-row-3{grid-template-columns:1fr}}
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600&family=Noto+Sans+Devanagari:wght@400&display=swap"></head>
+<body>
+<div class="campus-dashboard">
+<aside class="sidebar-placeholder"></aside>
+<main class="main-content">
+<div class="thin-topbar no-print"><span class="net-status"><span id="netBadge" class="net-badge net-online">● <span data-i18n="common.online">Online</span></span></span>
+<select id="langSelect" class="btn-secondary" onchange="setLanguage(this.value)"><option value="en">English</option><option value="hi">हिंदी</option></select>
+<button id="themeToggle" class="btn-secondary" onclick="toggleTheme()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span data-i18n="common.dark">Dark</span></button>
+</div>
+<div class="page-header"><div><h1 data-i18n="hub.requests.title">Leave & Gate-Pass</h1><p data-i18n="hub.requests.subtitle">One form for leave, gate-pass &amp; mess-off. Works offline — print slip as proof.</p></div></div>
+<details class="management-card no-print backend-details"><summary><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span data-i18n="hub.requests.backendTitle">Advanced: Backend connection</span></summary>
+<div class="backend-body"><div class="search-row"><input type="text" id="apiBase" value="http://localhost:5000" placeholder="http://localhost:5000" data-i18n-ph="hub.requests.phApi"><button type="button" class="btn-secondary" onclick="setApiBase(document.getElementById('apiBase').value)" data-i18n="common.save">Save</button>
+<button type="button" class="btn-secondary" onclick="localStorage.removeItem('campusApiBase');document.getElementById('apiBase').value=window.location.origin.startsWith('http')?window.location.origin:'http://localhost:5000'" data-i18n="hub.requests.autoBtn">Auto</button></div>
+<p><small data-i18n="hub.requests.backendNote">Leave as-is when served by backend (uses window.location.origin). Override only for separate backend host. Saved in localStorage.</small></p></div></details>
+<div class="hub-grid">
+<div class="hub-stat"><h3 data-i18n="hub.requests.pendingTitle">Pending requests</h3><p id="pendingRequests">0</p></div>
+<div class="hub-stat"><h3 data-i18n="hub.requests.howTitle">How it works</h3><p style="font-size:13px;font-weight:400"><span data-i18n="hub.requests.howText">Apply → Warden/Faculty approves → Show SMS/print at gate</span></p></div>
+</div>
+<section class="management-card request-create-card"><div class="request-create-head"><h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg><span data-i18n="hub.requests.newReq">New request</span></h2><button type="submit" form="requestForm" class="request-create-btn" data-i18n="hub.requests.submitBtn">Submit</button></div>
+<form id="requestForm" class="management-form">
+<div class="form-field"><label for="reqName" data-i18n="hub.requests.lblName">Name</label><input type="text" id="reqName" placeholder="Name (auto-filled from login)" data-i18n-ph="hub.requests.phName"></div>
+<div class="form-field"><label for="reqSid" data-i18n="hub.requests.lblSid">Student ID</label><input type="text" id="reqSid" placeholder="Student ID (auto-filled)" data-i18n-ph="hub.requests.phSid"></div>
+<div class="request-row-3"><div class="form-field"><label for="reqType" data-i18n="hub.requests.lblType">Request type</label><select id="reqType" required><option value="" data-i18n="hub.requests.selType">Select type</option><option data-i18n="hub.requests.optLeave">Leave</option><option data-i18n="hub.requests.optGatePass">GatePass</option><option data-i18n="hub.requests.optMessOff">Mess-Off</option><option data-i18n="hub.requests.optNightOut">Night-Out</option></select></div>
+<div class="form-field"><label for="reqFrom" data-i18n="hub.requests.lblFrom">From date</label><input type="date" id="reqFrom" required></div>
+<div class="form-field"><label for="reqTo" data-i18n="hub.requests.lblTo">To date</label><input type="date" id="reqTo" required></div></div>
+<div class="form-field" style="grid-column:1/-1"><label for="reqReason" data-i18n="hub.requests.lblReason">Reason</label><textarea id="reqReason" placeholder="Reason (e.g. family function, medical)" data-i18n-ph="hub.requests.phReason" required></textarea></div>
+</form><p id="reqMsg"></p>
+<p><small data-i18n="hub.requests.offlineNote">Offline? Submit anyway (saved on device) + Print slip from My requests below.</small></p>
+</section>
+<section class="management-card"><h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg><span data-i18n="hub.requests.myReq">My requests</span></h2>
+<div class="table-container"><table><thead><tr><th data-i18n="hub.requests.thId">ID</th><th data-i18n="hub.requests.thType">Type</th><th data-i18n="hub.requests.thDates">Dates</th><th data-i18n="hub.requests.thStatus">Status</th><th data-i18n="hub.requests.thSlip">Slip</th></tr></thead>
+<tbody id="myRequestTableBody"></tbody></table></div></section>
+<section class="management-card"><h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg><span data-i18n="hub.requests.allReq">All requests (Admin / Warden view)</span></h2>
+<div class="search-row"><div class="form-field"><label for="requestSearch" data-i18n="hub.requests.lblSearch">Search requests</label><input type="text" id="requestSearch" placeholder="Search name, ID, reason..." data-i18n-ph="hub.requests.phSearch" onkeyup="displayRequests()"></div>
+<div class="form-field"><label for="requestFilter" data-i18n="hub.requests.lblFilter">Status / Type</label><select id="requestFilter" onchange="displayRequests()"><option value="" data-i18n="hub.requests.optAll">All</option><option value="Pending" data-i18n="hub.requests.optPending">Pending</option><option value="Approved" data-i18n="hub.requests.optApproved">Approved</option><option value="Rejected" data-i18n="hub.requests.optRejected">Rejected</option><option value="Leave" data-i18n="hub.requests.optLeaveF">Leave</option><option value="GatePass" data-i18n="hub.requests.optGateF">GatePass</option></select></div></div>
+<div class="table-container"><table><thead><tr><th data-i18n="hub.requests.thIdType">ID / Type</th><th data-i18n="hub.requests.thStudent">Student</th><th data-i18n="hub.requests.thDates2">Dates</th><th data-i18n="hub.requests.thReason">Reason</th><th data-i18n="hub.requests.thStatus2">Status</th><th data-i18n="hub.requests.thAction">Action</th></tr></thead>
+<tbody id="requestTableBody"></tbody></table></div></section>
+</main></div>
+<script src="seed-01-people.js"></script>
+<script src="seed-02-timetable.js"></script>
+<script src="seed-03-fees.js"></script>
+<script src="seed-04-academic.js"></script>
+<script src="seed-05-campus.js"></script>
+<script src="seed-06-hub.js"></script>
+<script src="seed-07-notices.js"></script>
+<script src="script.js"></script><script src="campus-hub.js"></script>
+<script src="campus-sidebar.js"></script>
+<script src="lang.js"></script>
+</body></html>

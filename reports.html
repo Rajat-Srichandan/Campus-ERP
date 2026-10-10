@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports & Analytics - Campus Admin</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600&family=Noto+Sans+Devanagari:wght@400&display=swap">
+</head>
+<body>
+
+<div class="admin-dashboard">
+
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="admin-logo"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/><path d="M22 10v6"/></svg><span>Campus Admin</span></div>
+        <ul class="admin-menu">
+        <li class="nav-section" data-i18n="nav.overview">Overview</li>
+        <li><a href="admin-dashboard.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span data-i18n="nav.dashboard">Dashboard</span></a></li>
+        <li><a href="ops-dashboard.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg><span data-i18n="nav.ops">Ops Insights</span></a></li>
+        <li class="active"><a href="reports.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span data-i18n="nav.reports">Reports</span></a></li>
+        <li class="nav-section" data-i18n="nav.records">Records</li>
+        <li><a href="students.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/><path d="M22 10v6"/></svg><span data-i18n="nav.students">Students</span></a></li>
+        <li><a href="faculty.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg><span data-i18n="nav.faculty">Faculty</span></a></li>
+        <li><a href="courses.html#departments"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/></svg><span data-i18n="nav.departments">Departments</span></a></li>
+        <li><a href="courses.html#courses"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span data-i18n="nav.courses">Courses</span></a></li>
+        <li><a href="attendance.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><polyline points="9 16 11 18 15 14"/></svg><span data-i18n="nav.attendance">Attendance</span></a></li>
+        <li><a href="users.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span data-i18n="nav.users">User Management</span></a></li>
+        <li class="nav-section" data-i18n="nav.academic">Academic</li>
+        <li><a href="timetable.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span data-i18n="nav.timetable">Timetable</span></a></li>
+        <li><a href="assignments.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span data-i18n="nav.assignments">Assignments</span></a></li>
+        <li><a href="fees.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg><span data-i18n="nav.fees">Fees</span></a></li>
+        <li><a href="examinations.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg><span data-i18n="nav.examinations">Examinations</span></a></li>
+        <li><a href="library.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span data-i18n="nav.library">Library</span></a></li>
+        <li class="nav-section" data-i18n="nav.campus">Campus</li>
+        <li><a href="hostel.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span data-i18n="nav.hostel">Hostel</span></a></li>
+        <li><a href="transport.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13" rx="1"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg><span data-i18n="nav.transport">Transport</span></a></li>
+        <li class="nav-section" data-i18n="nav.hub">Hub</li>
+        <li><a href="requests.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span data-i18n="nav.requests">Leave & Gate-Pass</span></a></li>
+        <li><a href="certificates.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg><span data-i18n="nav.certificates">Certificates</span></a></li>
+        <li><a href="complaints.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><span data-i18n="nav.complaints">Complaints</span></a></li>
+        <li><a href="mess.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg><span data-i18n="nav.mess">Mess</span></a></li>
+        <li><a href="announcements.html"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span data-i18n="nav.announcements">Announcements</span></a></li>
+        </ul>
+        <button class="admin-logout" onclick="logout()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span data-i18n="nav.logout">Logout</span></button>
+    </aside>
+
+    <!-- Main -->
+    <main class="admin-main">
+
+        
+        <div class="thin-topbar no-print"><span class="net-status"><span id="netBadge" class="net-badge net-online" data-i18n="common.online">● Online</span></span>
+<select id="langSelect" class="btn-secondary" onchange="setLanguage(this.value)"><option value="en">English</option><option value="hi">हिंदी</option></select>
+<button id="themeToggle" class="btn-secondary" onclick="toggleTheme()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span data-i18n="common.darkMode">Dark</span></button></div>
+<header class="admin-header page-header">
+        <div>
+            <h1 data-i18n="admin.reports.title">Reports & Analytics</h1>
+            <p data-i18n="admin.reports.subtitle">Campus performance overview</p>
+        </div>
+    </header>
+
+    <!-- Main Statistics -->
+    <section class="report-section">
+        <h2 data-i18n="admin.reports.overall">Overall Statistics</h2>
+
+        <div class="report-summary">
+
+            <div class="report-card">
+                <div class="report-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/><path d="M22 10v6"/></svg></div>
+                <h3 data-i18n="admin.reports.students">Students</h3>
+                <p id="reportStudents">0</p>
+            </div>
+
+            <div class="report-card">
+                <div class="report-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+                <h3 data-i18n="admin.reports.faculty">Faculty</h3>
+                <p id="reportFaculty">0</p>
+            </div>
+
+            <div class="report-card">
+                <div class="report-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19V22H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></div>
+                <h3 data-i18n="admin.reports.courses">Courses</h3>
+                <p id="reportCourses">0</p>
+            </div>
+
+            <div class="report-card">
+                <div class="report-icon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg></div>
+                <h3 data-i18n="admin.reports.departments">Departments</h3>
+                <p id="reportDepartments">0</p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Financial Report -->
+    <section class="report-section management-card">
+        <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg><span data-i18n="admin.reports.financial">Financial Report</span></h2>
+
+        <div class="report-grid">
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.totalFees">Total Fees</h3>
+                <p id="reportTotalFees">₹0</p>
+            </div>
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.totalCollected">Total Collected</h3>
+                <p id="reportPaidFees">₹0</p>
+            </div>
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.totalDue">Total Due</h3>
+                <p id="reportDueFees">₹0</p>
+            </div>
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.pendingStudents">Pending Students</h3>
+                <p id="reportPendingStudents">0</p>
+            </div>
+
+        </div>
+
+        <div class="progress-box">
+            <div class="progress-header">
+                <span data-i18n="admin.reports.feeProgress">Fee Collection Progress</span>
+                <span id="feePercentage">0%</span>
+            </div>
+
+            <div class="progress-bar">
+                <div id="feeProgress"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Examination Report -->
+    <section class="report-section management-card">
+        <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg><span data-i18n="admin.reports.examReport">Examination Report</span></h2>
+
+        <div class="report-grid">
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.totalExams">Total Exams</h3>
+                <p id="reportTotalExams">0</p>
+            </div>
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.totalResults">Total Results</h3>
+                <p id="reportTotalResults">0</p>
+            </div>
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.passed">Passed</h3>
+                <p id="reportPassed">0</p>
+            </div>
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.failed">Failed</h3>
+                <p id="reportFailed">0</p>
+            </div>
+
+        </div>
+
+        <div class="progress-box">
+            <div class="progress-header">
+                <span data-i18n="admin.reports.passPct">Pass Percentage</span>
+                <span id="passPercentage">0%</span>
+            </div>
+
+            <div class="progress-bar">
+                <div id="passProgress"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Library Report -->
+    <section class="report-section management-card">
+        <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span data-i18n="admin.reports.libraryReport">Library Report</span></h2>
+
+        <div class="report-grid">
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.totalBooks">Total Books</h3>
+                <p id="reportTotalBooks">0</p>
+            </div>
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.available">Available</h3>
+                <p id="reportAvailableBooks">0</p>
+            </div>
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.issued">Issued</h3>
+                <p id="reportIssuedBooks">0</p>
+            </div>
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.overdue">Overdue</h3>
+                <p id="reportOverdueBooks">0</p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Hostel Report -->
+    <section class="report-section management-card">
+        <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span data-i18n="admin.reports.hostelReport">Hostel Report</span></h2>
+
+        <div class="report-grid">
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.totalRooms">Total Rooms</h3>
+                <p id="reportTotalRooms">0</p>
+            </div>
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.totalCapacity">Total Capacity</h3>
+                <p id="reportHostelCapacity">0</p>
+            </div>
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.occupiedBeds">Occupied Beds</h3>
+                <p id="reportOccupiedBeds">0</p>
+            </div>
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.availableBeds">Available Beds</h3>
+                <p id="reportAvailableBeds">0</p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Transport Report -->
+    <section class="report-section management-card">
+        <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C19.1 3.8 18.1 3 17 3H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/></svg><span data-i18n="admin.reports.transportReport">Transport Report</span></h2>
+
+        <div class="report-grid">
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.totalBuses">Total Buses</h3>
+                <p id="reportTotalBuses">0</p>
+            </div>
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.totalCapacity">Total Capacity</h3>
+                <p id="reportBusCapacity">0</p>
+            </div>
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.occupiedSeats">Occupied Seats</h3>
+                <p id="reportOccupiedSeats">0</p>
+            </div>
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.availableSeats">Available Seats</h3>
+                <p id="reportAvailableSeats">0</p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Announcements -->
+    <section class="report-section management-card">
+        <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg><span data-i18n="admin.reports.commReport">Communication Report</span></h2>
+
+        <div class="report-grid">
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.totalAnn">Total Announcements</h3>
+                <p id="reportAnnouncements">0</p>
+            </div>
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.studentAnn">Student Announcements</h3>
+                <p id="reportStudentAnnouncements">0</p>
+            </div>
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.facultyAnn">Faculty Announcements</h3>
+                <p id="reportFacultyAnnouncements">0</p>
+            </div>
+
+            <div class="analytics-card">
+                <h3 data-i18n="admin.reports.highPriority">High Priority</h3>
+                <p id="reportHighAnnouncements">0</p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Refresh -->
+    <div class="report-refresh">
+        <button type="button" class="add-student-btn" onclick="generateReports()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg><span data-i18n="admin.reports.refresh">Refresh Reports</span></button>
+    </div>
+
+</main>
+
+</div>
+
+<script src="seed-01-people.js"></script>
+<script src="seed-02-timetable.js"></script>
+<script src="seed-03-fees.js"></script>
+<script src="seed-04-academic.js"></script>
+<script src="seed-05-campus.js"></script>
+<script src="seed-06-hub.js"></script>
+<script src="seed-07-notices.js"></script>
+<script src="script.js"></script>
+<script src="progress.js"></script><script src="lang.js"></script><script src="lang-admin.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        generateReports();
+    });
+</script>
+
+</body>
+</html>

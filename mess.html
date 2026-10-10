@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mess Services - Campus Hub</title><link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600&family=Noto+Sans+Devanagari:wght@400&display=swap">
+<style>
+/* Mess menu: keep all 4 columns visible, wrap long text instead of truncating Dinner */
+.mess-table{width:100%;min-width:640px;table-layout:auto}
+.mess-table th,.mess-table td{white-space:normal;overflow-wrap:break-word;word-break:break-word;vertical-align:top;min-width:110px}
+.mess-table th:first-child,.mess-table td:first-child{min-width:90px}
+.mess-table th:last-child,.mess-table td:last-child{min-width:170px}
+/* Mess timings + feedback side-by-side (additive, vanilla) */
+.mess-side-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.mess-side-grid .management-card{min-width:0;margin:0;max-width:100%}
+.mess-side-grid .management-card .table-container{overflow-x:visible;max-width:100%}
+.mess-timings-table{width:100%;border-collapse:collapse;table-layout:fixed;min-width:0}
+.mess-side-grid .management-card .table-container table.mess-timings-table{min-width:0;width:100%;table-layout:fixed}
+.mess-timings-table th,.mess-timings-table td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border,#e5e7eb);white-space:normal;overflow-wrap:break-word;word-break:break-word;min-width:0}
+.mess-side-grid .management-card .table-container table.mess-timings-table th:last-child,.mess-side-grid .management-card .table-container table.mess-timings-table td:last-child,.mess-side-grid .management-card .table-container table.mess-timings-table th,.mess-side-grid .management-card .table-container table.mess-timings-table td{white-space:normal}
+.mess-timings-table tr:last-child th,.mess-timings-table tr:last-child td{border-bottom:0}
+@media (max-width:700px){.mess-side-grid{grid-template-columns:1fr}}
+@media (max-width:500px){
+.mess-timings-table thead{display:none}
+.mess-timings-table,.mess-timings-table tbody,.mess-timings-table tr,.mess-timings-table td{display:block;width:100%;box-sizing:border-box}
+.mess-timings-table tr{border:1px solid var(--border,#e5e7eb);border-radius:8px;padding:6px 2px;margin-bottom:10px}
+.mess-timings-table tr:last-child th,.mess-timings-table tr:last-child td{border-bottom:0}
+.mess-timings-table td{border-bottom:0;padding:4px 10px}
+.mess-timings-table td:first-child{font-weight:600}
+.mess-timings-table td:last-child{padding-top:0}
+}
+</style></head>
+<body>
+<div class="campus-dashboard">
+<aside class="sidebar-placeholder"></aside>
+<main class="main-content">
+<div class="thin-topbar no-print"><span class="net-status"><span id="netBadge" class="net-badge net-online">● Online</span></span>
+<select id="langSelect" class="btn-secondary" onchange="setLanguage(this.value)"><option value="en">English</option><option value="hi">हिंदी</option></select>
+<button id="themeToggle" class="btn-secondary" onclick="toggleTheme()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span>Dark</span></button>
+</div>
+<div class="page-header"><div><h1 data-i18n="hub.mess.title">Mess Services</h1><p data-i18n="hub.mess.subtitle">Weekly menu, daily rating, rebate via Leave/Mess-Off request.</p></div></div>
+<div class="hub-grid"><div class="hub-stat"><h3 data-i18n="hub.mess.avgTitle">Average rating</h3><p id="messAvg">—</p></div>
+<div class="hub-stat"><h3 data-i18n="hub.mess.todayTitle">Today</h3><p id="messToday" style="font-size:13px;font-weight:400">—</p></div></div>
+<section class="management-card"><h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg><span data-i18n="hub.mess.menuTitle">Weekly menu</span></h2>
+<div class="table-container"><table class="mess-table"><thead><tr id="messMenuHeadRow"><th data-i18n="hub.mess.thDay">Day</th><th data-i18n="hub.mess.thBreakfast">Breakfast</th><th data-i18n="hub.mess.thLunch">Lunch</th><th data-i18n="hub.mess.thDinner">Dinner</th></tr></thead>
+<tbody id="messMenuBody"></tbody></table></div>
+<p><small><span data-i18n="hub.mess.rebateNote">Mess-off / rebate? File it in</span> <a class="link-btn" href="requests.html" data-i18n="hub.mess.rebateLink">Leave & Gate-Pass → Mess-Off</a>.</small></p></section>
+<div class="mess-side-grid">
+<section class="management-card" aria-label="Mess timings"><h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span data-i18n="hub.mess.timingsTitle">Mess timings</span></h2>
+<div class="table-container"><table class="mess-timings-table"><thead><tr><th scope="col" data-i18n="hub.mess.thMeal">Meal</th><th scope="col" data-i18n="hub.mess.thTiming">Timing</th></tr></thead>
+<tbody><tr><td data-i18n="hub.mess.mealBreakfast">Breakfast</td><td>7:30 AM – 9:30 AM</td></tr>
+<tr><td data-i18n="hub.mess.mealLunch">Lunch</td><td>12:00 PM – 2:00 PM</td></tr>
+<tr><td data-i18n="hub.mess.mealSnacks">Snacks</td><td>4:30 PM – 5:30 PM</td></tr>
+<tr><td data-i18n="hub.mess.mealDinner">Dinner</td><td>7:00 PM – 9:00 PM</td></tr></tbody></table></div></section>
+<section class="management-card"><h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span data-i18n="hub.mess.fbTitle">Rate & feedback (10 seconds)</span></h2>
+<form id="messForm" class="management-form">
+<div class="form-field"><label for="messMeal" data-i18n="hub.mess.lblMeal">Meal</label><select id="messMeal" required><option value="" data-i18n="hub.mess.selMeal">Meal</option><option data-i18n="hub.mess.optBreakfast">Breakfast</option><option data-i18n="hub.mess.optLunch">Lunch</option><option data-i18n="hub.mess.optDinner">Dinner</option></select></div>
+<div class="form-field"><label for="messRating" data-i18n="hub.mess.lblRating">Rating</label><select id="messRating" required><option value="" data-i18n="hub.mess.selRating">Rating</option><option value="5" data-i18n="hub.mess.optR5">5 ★ Excellent</option><option value="4" data-i18n="hub.mess.optR4">4 ★ Good</option><option value="3" data-i18n="hub.mess.optR3">3 ★ OK</option><option value="2" data-i18n="hub.mess.optR2">2 ★ Poor</option><option value="1" data-i18n="hub.mess.optR1">1 ★ Bad</option></select></div>
+<div class="form-field" style="grid-column:1/-1"><label for="messText" data-i18n="hub.mess.lblComment">Comment (optional)</label><textarea id="messText" placeholder="Optional comment (e.g. less salt today)" data-i18n-ph="hub.mess.phComment" style="grid-column:1/-1"></textarea></div>
+<button type="submit" class="btn-primary" data-i18n="hub.mess.sendBtn">Send feedback</button></form><p id="messMsg"></p></section>
+</div>
+<section class="management-card"><h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span data-i18n="hub.mess.recentTitle">Recent feedback (mess manager view)</span></h2>
+<div class="table-container"><table><thead><tr><th data-i18n="hub.mess.thMeal2">Meal</th><th data-i18n="hub.mess.thRating">Rating</th><th data-i18n="hub.mess.thComment">Comment</th><th data-i18n="hub.mess.thDate">Date</th></tr></thead>
+<tbody id="messFeedbackBody"></tbody></table></div></section>
+</main></div>
+<script src="seed-01-people.js"></script>
+<script src="seed-02-timetable.js"></script>
+<script src="seed-03-fees.js"></script>
+<script src="seed-04-academic.js"></script>
+<script src="seed-05-campus.js"></script>
+<script src="seed-06-hub.js"></script>
+<script src="seed-07-notices.js"></script>
+<script src="script.js"></script><script src="campus-hub.js"></script>
+<script src="campus-sidebar.js"></script>
+<script src="lang.js"></script>
+</body></html>

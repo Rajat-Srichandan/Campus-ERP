@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Settings - Campus Management</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600&family=Noto+Sans+Devanagari:wght@400&display=swap">
+    <style>
+        /* Dynamic student sidebar renders as a fixed 250px rail
+           (see style.css .student-sidebar): offset this page's main
+           pane the same way .student-main is offset. Scoped here so
+           other .dashboard pages with in-flow sidebars are untouched. */
+        .dashboard:has(> aside.student-sidebar) > .main-content{margin-left:250px;width:calc(100% - 250px)}
+        @media (max-width:700px){.dashboard:has(> aside.student-sidebar) > .main-content{margin-left:70px;width:calc(100% - 70px)}}
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+
+<aside class="sidebar-placeholder"></aside>
+
+<main class="main-content">
+
+    
+        <div class="thin-topbar no-print"><span class="net-status"><span id="netBadge" class="net-badge net-online">● <span data-i18n="common.online">Online</span></span></span>
+<select id="langSelect" class="btn-secondary" onchange="setLanguage(this.value)"><option value="en">English</option><option value="hi">हिंदी</option></select>
+<button id="themeToggle" class="btn-secondary" onclick="toggleTheme()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span data-i18n="common.dark">Dark</span></button></div>
+<div class="page-header">
+        <h1 data-i18n="student.settings.pageTitle">Student Profile & Settings</h1>
+        <p data-i18n="student.settings.subtitle">Manage your profile and account preferences.</p>
+    </div>
+
+    <!-- Profile -->
+    <section class="settings-section">
+
+        <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span data-i18n="student.settings.profileTitle">My Profile</span></h2>
+
+        <form onsubmit="updateStudentProfile(event)">
+
+            <div class="settings-grid">
+
+                <div>
+                    <label data-i18n="student.settings.fullName">Full Name</label>
+                    <input
+                        type="text"
+                        id="studentProfileName"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label data-i18n="student.settings.studentId">Student ID</label>
+                    <input
+                        type="text"
+                        id="studentProfileId"
+                        readonly
+                    >
+                </div>
+
+                <div>
+                    <label data-i18n="student.settings.email">Email</label>
+                    <input
+                        type="email"
+                        id="studentProfileEmail"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label data-i18n="student.settings.department">Department</label>
+                    <input
+                        type="text"
+                        id="studentProfileDepartment"
+                        placeholder="e.g. Computer Science"
+                    >
+                </div>
+
+                <div>
+                    <label data-i18n="student.settings.semester">Semester</label>
+                    <input
+                        type="text"
+                        id="studentProfileSemester"
+                        placeholder="e.g. 3rd Semester"
+                    >
+                </div>
+
+            </div>
+
+            <button type="submit" class="settings-save-btn">
+                <span data-i18n="student.settings.saveProfile">Save Profile</span>
+            </button>
+
+        </form>
+
+    </section>
+
+
+    <!-- Password -->
+    <section class="settings-section">
+
+        <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span data-i18n="student.settings.passwordTitle">Change Password</span></h2>
+
+        <form onsubmit="changeStudentPassword(event)">
+
+            <div class="settings-grid">
+
+                <div>
+                    <label data-i18n="student.settings.currentPassword">Current Password</label>
+                    <div class="pwd-wrap">
+                        <input
+                            type="password"
+                            id="currentStudentPassword"
+                            required
+                        >
+                        <button type="button" class="pwd-toggle" aria-label="Show password" aria-pressed="false" title="Show password" onclick="togglePasswordVisibility('currentStudentPassword', this)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    </div>
+                </div>
+
+                <div>
+                    <label data-i18n="student.settings.newPassword">New Password</label>
+                    <div class="pwd-wrap">
+                        <input
+                            type="password"
+                            id="newStudentPassword"
+                            minlength="6"
+                            required
+                        >
+                        <button type="button" class="pwd-toggle" aria-label="Show password" aria-pressed="false" title="Show password" onclick="togglePasswordVisibility('newStudentPassword', this)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    </div>
+                </div>
+
+                <div>
+                    <label data-i18n="student.settings.confirmPassword">Confirm New Password</label>
+                    <div class="pwd-wrap">
+                        <input
+                            type="password"
+                            id="confirmStudentPassword"
+                            minlength="6"
+                            required
+                        >
+                        <button type="button" class="pwd-toggle" aria-label="Show password" aria-pressed="false" title="Show password" onclick="togglePasswordVisibility('confirmStudentPassword', this)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    </div>
+                </div>
+
+            </div>
+
+            <button type="submit" class="settings-save-btn">
+                <span data-i18n="student.settings.passwordTitle">Change Password</span>
+            </button>
+
+        </form>
+
+    </section>
+
+
+    <!-- Notification Preferences -->
+    <section class="settings-section">
+
+        <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span data-i18n="student.settings.prefTitle">Notification Preferences</span></h2>
+
+        <div class="preference-row">
+
+            <div>
+                <strong data-i18n="student.settings.prefAnnouncements">Announcements</strong>
+                <p data-i18n="student.settings.prefAnnouncementsDesc">Receive important campus announcements.</p>
+            </div>
+
+            <label class="switch">
+                <input
+                    type="checkbox"
+                    id="prefAnnouncements"
+                    onchange="saveStudentPreferences()"
+                >
+                <span class="slider"></span>
+            </label>
+
+        </div>
+
+        <div class="preference-row">
+
+            <div>
+                <strong data-i18n="student.settings.prefAssignments">Assignment Reminders</strong>
+                <p data-i18n="student.settings.prefAssignmentsDesc">Receive reminders about assignment deadlines.</p>
+            </div>
+
+            <label class="switch">
+                <input
+                    type="checkbox"
+                    id="prefAssignments"
+                    onchange="saveStudentPreferences()"
+                >
+                <span class="slider"></span>
+            </label>
+
+        </div>
+
+        <div class="preference-row">
+
+            <div>
+                <strong data-i18n="student.settings.prefExams">Examination Alerts</strong>
+                <p data-i18n="student.settings.prefExamsDesc">Receive examination and result notifications.</p>
+            </div>
+
+            <label class="switch">
+                <input
+                    type="checkbox"
+                    id="prefExams"
+                    onchange="saveStudentPreferences()"
+                >
+                <span class="slider"></span>
+            </label>
+
+        </div>
+
+        <div class="preference-row">
+
+            <div>
+                <strong data-i18n="student.settings.prefFees">Fee Reminders</strong>
+                <p data-i18n="student.settings.prefFeesDesc">Receive reminders about pending fees.</p>
+            </div>
+
+            <label class="switch">
+                <input
+                    type="checkbox"
+                    id="prefFees"
+                    onchange="saveStudentPreferences()"
+                >
+                <span class="slider"></span>
+            </label>
+
+        </div>
+
+        <div class="preference-row">
+
+            <div>
+                <strong>Push alerts</strong>
+                <p>Get notices &amp; SLA alerts on this device. <small id="pushStatus"></small></p>
+            </div>
+
+            <label class="switch">
+                <input
+                    type="checkbox"
+                    id="prefPush"
+                    onchange="togglePush(this)"
+                >
+                <span class="slider"></span>
+            </label>
+
+        </div>
+
+    </section>
+
+
+    <!-- Account Information -->
+    <section class="settings-section">
+
+        <h2><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span data-i18n="student.settings.accountTitle">Account Information</span></h2>
+
+        <div class="account-info">
+
+            <div>
+                <strong data-i18n="student.settings.accountType">Account Type</strong>
+                <span data-i18n="common.active">Active</span>
+            </div>
+
+            <div>
+                <strong data-i18n="student.settings.accountStatus">Account Status</strong>
+                <span class="account-active">Active</span>
+            </div>
+
+            <div>
+                <strong data-i18n="student.settings.lastLogin">Last Login</strong>
+                <span id="studentLastLogin" data-i18n="student.settings.currentSession">Current Session</span>
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+</div>
+
+<script src="seed-01-people.js"></script>
+<script src="seed-02-timetable.js"></script>
+<script src="seed-03-fees.js"></script>
+<script src="seed-04-academic.js"></script>
+<script src="seed-05-campus.js"></script>
+<script src="seed-06-hub.js"></script>
+<script src="seed-07-notices.js"></script>
+<script src="script.js"></script>
+<script src="campus-sidebar.js"></script>
+<script src="push-client.js"></script>
+<script src="lang.js"></script>
+<script src="lang-student.js"></script>
+<script>
+(function () {
+    // Backfill empty Dept/Sem from the enrolled-students record so the
+    // fields never render blank. Placeholders remain as a hint when no
+    // record is found. Runs after script.js displayStudentProfile().
+    function prefillDeptSem() {
+        var dept = document.getElementById("studentProfileDepartment");
+        var sem = document.getElementById("studentProfileSemester");
+        if (!dept && !sem) return;
+        var deptEmpty = dept && !String(dept.value || "").trim();
+        var semEmpty = sem && !String(sem.value || "").trim();
+        if (!deptEmpty && !semEmpty) return;
+        var match = null;
+        try {
+            var sidEl = document.getElementById("studentProfileId");
+            var sid = sidEl ? String(sidEl.value || "").trim() : "";
+            if (!sid) {
+                var sess = JSON.parse(localStorage.getItem("campusSession") || "null");
+                sid = (sess && (sess.studentId || sess.id || sess.username)) || "";
+                sid = String(sid).trim();
+            }
+            var list = JSON.parse(localStorage.getItem("campusStudents") || "[]");
+            if (sid && Object.prototype.toString.call(list) === "[object Array]") {
+                for (var i = 0; i < list.length; i++) {
+                    if (String(list[i].id || list[i].studentId || "") === sid) { match = list[i]; break; }
+                }
+            }
+        } catch (e) {}
+        if (match) {
+            if (deptEmpty && match.department) dept.value = match.department;
+            if (semEmpty && match.semester) sem.value = match.semester;
+        }
+    }
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", function () { setTimeout(prefillDeptSem, 0); });
+    } else {
+        setTimeout(prefillDeptSem, 0);
+    }
+})();
+function togglePasswordVisibility(inputId, btn) {
+    var input = document.getElementById(inputId);
+    if (!input) return;
+    var show = input.type === "password";
+    input.type = show ? "text" : "password";
+    var EYE = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+    var EYE_OFF = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>';
+    btn.innerHTML = show ? EYE_OFF : EYE;
+    btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
+    btn.setAttribute("aria-pressed", show ? "true" : "false");
+    btn.setAttribute("title", show ? "Hide password" : "Show password");
+    input.focus({ preventScroll: true });
+    try {
+        var len = input.value.length;
+        input.setSelectionRange(len, len);
+    } catch (e) {}
+}
+</script>
+
+</body>
+</html>

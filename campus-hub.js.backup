@@ -1,0 +1,1106 @@
+/* ============================================================
+   Campus-Hub v2 : unified everyday campus operations
+   Modules: leave/gate-pass, certificates, hostel complaints (SLA),
+   mess, targeted notices (audience+dept+semester), fee queries,
+   ops analytics, attendance/timetable live, i18n EN/HI,
+   lite low-bandwidth mode, offline-first + print slips.
+   Offline store: localStorage. Online mirror: backend/server.js.
+   Legacy keys reused: campusAnnouncements, campusAttendance,
+   campusTimetable, campusFees. Never overwrites legacy seeds.
+   ============================================================ */
+(function () {
+  "use strict";
+
+  var LS = {
+    requests: "campusRequests",
+    certificates: "campusCertificates",
+    complaints: "campusComplaints",
+    messFeedback: "campusMessFeedback",
+    messMenu: "campusMessMenu",
+    feeQueries: "campusFeeQueries",
+    lang: "campusLang",
+    lite: "campusLite",
+    theme: "campusTheme",
+    offlineQueue: "campusOfflineQueue",
+    apiBase: "campusApiBase",
+    seeded: "campusHubSeededV2"
+  };
+
+  function load(key, fallback) {
+    try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+    catch (e) { return fallback; }
+  }
+  function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
+  function uid(prefix) {
+    return (prefix || "REQ") + "-" + Date.now().toString(36).toUpperCase() + "-" + Math.floor(Math.random() * 900 + 100);
+  }
+  function todayISO() { return new Date().toISOString().slice(0, 10); }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function currentUser() { try { return JSON.parse(localStorage.getItem("campusSession")) || null; } catch (e) { return null; } }
+  function myName() {
+    var u = currentUser(); if (u && u.name) return u.name;
+    try { var p = JSON.parse(localStorage.getItem("campusCurrentStudentProfile") || "null"); if (p && p.name) return p.name; } catch (e) {}
+    return "";
+  }
+  function myId() {
+    var u = currentUser(); if (u && (u.userId || u.id)) return u.userId || u.id;
+    try { var p = JSON.parse(localStorage.getItem("campusCurrentStudentProfile") || "null"); if (p && p.studentId) return p.studentId; } catch (e) {}
+    return "";
+  }
+  function myDept() { try { var p = JSON.parse(localStorage.getItem("campusCurrentStudentProfile") || "null"); return (p && p.department) || ""; } catch (e) { return ""; } }
+  function mySem() { try { var p = JSON.parse(localStorage.getItem("campusCurrentStudentProfile") || "null"); return (p && p.semester) || ""; } catch (e) { return ""; } }
+
+  /* ---------------- I18N ---------------- */
+  var I18N = {
+    en: { dashboard: "Dashboard", requests: "Leave & Gate-Pass", certificates: "Certificates", complaints: "Hostel Complaints", mess: "Mess Services", notices: "Notices", ops: "Ops Insights", pending: "Pending", approved: "Approved", rejected: "Rejected", resolved: "Resolved", open: "Open", apply: "Submit", online: "Online", offline: "Offline — saved on this device, syncs when online.", printSlip: "Print slip (offline proof)" },
+    hi: { dashboard: "डैशबोर्ड", requests: "छुट्टी व गेट-पास", certificates: "प्रमाणपत्र", complaints: "हॉस्टल शिकायतें", mess: "मेस सेवाएं", notices: "सूचनाएं", ops: "प्रशासन सारांश", pending: "लंबित", approved: "स्वीकृत", rejected: "अस्वीकृत", resolved: "समाधान", open: "खुला", apply: "जमा करें", online: "ऑनलाइन", offline: "ऑफ़लाइन — इसी डिवाइस में सहेजा गया।", printSlip: "पर्ची प्रिंट करें" }
+  };
+  function getLang() { return localStorage.getItem(LS.lang) || "en"; }
+  function t(k) { var l = getLang(); return (I18N[l] && I18N[l][k]) || I18N.en[k] || k; }
+  function setLanguage(lang) {
+    localStorage.setItem(LS.lang, lang);
+    document.documentElement.lang = lang === "hi" ? "hi" : "en";
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      var k = el.getAttribute("data-i18n"); if (I18N[lang] && I18N[lang][k]) el.textContent = I18N[lang][k];
+    });
+    var s = document.getElementById("langSelect"); if (s) s.value = lang;
+  }
+
+  /* ---------------- theme (light/dark) + net ---------------- */
+  function getTheme() {
+    try {
+      var s = localStorage.getItem(LS.theme);
+      if (s === "dark" || s === "light") return s;
+    } catch (e) {}
+    try {
+      if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
+    } catch (e) {}
+    return "light";
+  }
+  function applyTheme() {
+    var dark = getTheme() === "dark";
+    document.body.classList.toggle("dark-mode", dark);
+    // Explicit light class so the prefers-color-scheme: dark media
+    // blocks in style.css cannot keep the page dark after the user
+    // picks light. body.light-mode (below) outranks those rules.
+    document.body.classList.toggle("light-mode", !dark);
+    var MOON_SVG = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'; var SUN_SVG = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>'; var b = document.getElementById("themeToggle"); if (b) b.innerHTML = dark ? SUN_SVG + "<span>Light</span>" : MOON_SVG + "<span>Dark</span>";
+  }
+  function toggleTheme() {
+    var next = getTheme() === "dark" ? "light" : "dark";
+    try { localStorage.setItem(LS.theme, next); } catch (e) {}
+    applyTheme();
+  }
+  /* Legacy lite-mode entry points kept harmless so stale cached
+     pages calling toggleLiteMode()/applyLiteMode() never throw. */
+  function applyLiteMode() { try { applyTheme(); } catch (e) {} }
+  function toggleLiteMode() { try { toggleTheme(); } catch (e) {} }
+  function updateNetBadge() {
+    var badge = document.getElementById("netBadge"); if (!badge) return;
+    if (navigator.onLine) { badge.textContent = "● " + t("online"); badge.className = "net-badge net-online"; syncQueue(); pullServerSummary(); }
+    else { badge.textContent = "○ " + t("offline"); badge.className = "net-badge net-offline"; }
+  }
+  function queueForSync(entry) { var q = load(LS.offlineQueue, []); entry.at = new Date().toISOString(); q.push(entry); save(LS.offlineQueue, q.slice(-100)); }
+  function defaultApiBase() {
+    try {
+      if (window.location && window.location.protocol && window.location.protocol.indexOf("http") === 0 && window.location.origin && window.location.origin !== "null") return String(window.location.origin).replace(/\/+$/, "");
+    } catch (e) {}
+    return "http://localhost:5000";
+  }
+  function apiBase() {
+    var el = document.getElementById("apiBase");
+    var v = el && el.value ? String(el.value).trim() : "";
+    if (v) { try { localStorage.setItem(LS.apiBase, v); } catch (e) {} return v.replace(/\/+$/, ""); }
+    try { var s = localStorage.getItem(LS.apiBase); if (s && String(s).trim()) return String(s).trim().replace(/\/+$/, ""); } catch (e) {}
+    return defaultApiBase();
+  }
+  function setApiBase(url) {
+    url = String(url || "").trim().replace(/\/+$/, "");
+    if (!url) return defaultApiBase();
+    try { localStorage.setItem(LS.apiBase, url); } catch (e) {}
+    var el = document.getElementById("apiBase"); if (el) el.value = url;
+    return url;
+  }
+  function initApiBaseField() {
+    var el = document.getElementById("apiBase"); if (!el) return;
+    try {
+      var stored = localStorage.getItem(LS.apiBase);
+      if (!el.value) el.value = (stored && String(stored).trim()) || defaultApiBase();
+      else if (String(el.value).trim()) localStorage.setItem(LS.apiBase, String(el.value).trim());
+    } catch (e) { if (!el.value) el.value = defaultApiBase(); }
+    el.addEventListener("change", function () { setApiBase(el.value); updateNetBadge(); });
+  }
+  function syncQueue() {
+    var q = load(LS.offlineQueue, []); if (!q.length || !navigator.onLine) return;
+    var remaining = []; var chain = Promise.resolve();
+    q.forEach(function (entry) {
+      chain = chain.then(function () {
+        return fetch(apiBase() + entry.path, { method: entry.method || "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(entry.body || {}) })
+          .then(function (r) { if (!r.ok) remaining.push(entry); }).catch(function () { remaining.push(entry); });
+      });
+    });
+    chain.then(function () { save(LS.offlineQueue, remaining); });
+  }
+  function pullServerSummary() {
+    // Use the same local source as the KPI cards (opsStats), so this
+    // note can never contradict them. The backend starts with empty
+    // in-memory queues (0 req / 0 open) while local seed/demo data is
+    // non-empty, which caused the mismatch.
+    var note = document.getElementById("opsServerNote"); if (!note) return;
+    try {
+      var s = opsStats();
+      note.textContent = "Local (offline-first) view: " + s.pendingReq + " req pending, " + s.openComp + " complaints open.";
+    } catch (e) {}
+  }
+
+  /* ---------------- demo seed (first run only) ---------------- */
+  function seedDemoData() {
+    if (localStorage.getItem(LS.seeded) === "1") return;
+    var hasAny = load(LS.requests, null) || load(LS.complaints, null) || load(LS.certificates, null);
+    if (hasAny && hasAny.length) { localStorage.setItem(LS.seeded, "1"); return; }
+    var now = Date.now();
+    save(LS.requests, [
+      { id: "REQ-DEMO1", type: "GatePass", studentName: "Rahul Kumar", studentId: "STU001", from: todayISO(), to: todayISO(), reason: "Family visit", status: "Pending", createdAt: new Date(now - 36e5).toISOString(), decidedAt: null, note: "" },
+      { id: "REQ-DEMO2", type: "Leave", studentName: "Priya Sharma", studentId: "STU002", from: todayISO(), to: todayISO(), reason: "Medical", status: "Approved", createdAt: new Date(now - 864e5).toISOString(), decidedAt: new Date(now - 43e6).toISOString(), note: "Report to warden on return" }
+    ]);
+    save(LS.complaints, [
+      { id: "CMP-DEMO1", category: "Electrical", hostel: "BH-2", room: "204", desc: "Fan not working", studentName: "Rahul Kumar", studentId: "STU001", priority: "High", status: "Open", createdAt: new Date(now - 5 * 36e5).toISOString(), resolvedAt: null, slaHours: 24 },
+      { id: "CMP-DEMO2", category: "Cleaning", hostel: "BH-1", room: "101", desc: "Washroom cleaning pending", studentName: "Aman Das", studentId: "STU003", priority: "Normal", status: "Resolved", createdAt: new Date(now - 50 * 36e5).toISOString(), resolvedAt: new Date(now - 40 * 36e5).toISOString(), slaHours: 12 }
+    ]);
+    save(LS.certificates, [{ id: "CERT-DEMO1", kind: "Bonafide", purpose: "Scholarship", studentName: "Rahul Kumar", studentId: "STU001", status: "Pending", createdAt: new Date(now - 72e5).toISOString(), issuedAt: null }]);
+    save(LS.feeQueries, [{ id: "FEEQ-DEMO1", studentId: "STU003", studentName: "Aman Das", topic: "Receipt missing", text: "Paid Rs 10,000 on 1 Oct, receipt not generated", status: "Open", createdAt: new Date(now - 72e5).toISOString() }]);
+    save(LS.messFeedback, [{ id: "MESS-DEMO1", meal: "Lunch", rating: 4, text: "Good dal today", studentId: "STU001", at: new Date(now - 72e5).toISOString() }]);
+    try {
+      var anns = JSON.parse(localStorage.getItem("campusAnnouncements") || "[]");
+      if (!anns.length) {
+        localStorage.setItem("campusAnnouncements", JSON.stringify([
+          { id: "ANN001", title: "[CSE 3rd Sem] Lab rescheduled", message: "Data Structures lab moves to 2 PM, Room 204.", audience: "Students", department: "Computer Science", semester: "3rd Semester", priority: "Important", date: todayISO() },
+          { id: "ANN002", title: "Mess timing", message: "Dinner 7-9 PM this week.", audience: "All", department: "All", semester: "All", priority: "Normal", date: todayISO() }
+        ]));
+      }
+    } catch (e) {}
+    localStorage.setItem(LS.seeded, "1");
+  }
+
+  /* ---------------- legacy data readers ---------------- */
+  function getAttendance() { return load("campusAttendance", []); }
+  function getTimetable() { return load("campusTimetable", []); }
+  function getFees() { return load("campusFees", []); }
+  function getAnnouncements() { try { return JSON.parse(localStorage.getItem("campusAnnouncements")) || []; } catch (e) { return []; } }
+  function myAttendancePct() {
+    var me = myId(); if (!me) return null;
+    var recs = getAttendance().filter(function (r) { return String(r.studentId) === String(me); });
+    if (!recs.length) return null;
+    var present = recs.filter(function (r) { return r.status === "Present"; }).length;
+    return { pct: Math.round(present / recs.length * 100), present: present, total: recs.length };
+  }
+  function lowAttendanceList(threshold) {
+    threshold = threshold || 75;
+    var byId = {};
+    getAttendance().forEach(function (r) {
+      var k = r.studentId + "|" + r.studentName;
+      byId[k] = byId[k] || { studentId: r.studentId, studentName: r.studentName, total: 0, present: 0 };
+      byId[k].total++; if (r.status === "Present") byId[k].present++;
+    });
+    return Object.keys(byId).map(function (k) {
+      var v = byId[k]; v.pct = v.total ? Math.round(v.present / v.total * 100) : 0; return v;
+    }).filter(function (v) { return v.total >= 2 && v.pct < threshold; }).sort(function (a, b) { return a.pct - b.pct; });
+  }
+  function todaysClasses() {
+    var today = new Date().toLocaleString("en-US", { weekday: "long" });
+    var meSem = mySem();
+    return getTimetable().filter(function (c) {
+      if (c.day !== today) return false;
+      if (meSem && c.semester && c.semester !== meSem) return false;
+      return true;
+    });
+  }
+  function myFeesDue() {
+    var me = myId(); var fees = getFees(); if (!fees.length) return null;
+    var mine = me ? fees.filter(function (f) { return String(f.studentId) === String(me); }) : fees;
+    if (!mine.length) return null;
+    function total(f) { return Number(f.tuition || 0) + Number(f.hostel || 0) + Number(f.exam || 0); }
+    return mine.reduce(function (a, f) { return a + Math.max(total(f) - Number(f.paid || 0), 0); }, 0);
+  }
+
+  /* ================= REQUESTS ================= */
+  function getRequests() { return load(LS.requests, []); }
+  function submitRequest(ev) {
+    if (ev) ev.preventDefault();
+    var type = document.getElementById("reqType").value;
+    var from = document.getElementById("reqFrom").value;
+    var to = document.getElementById("reqTo").value;
+    var reason = document.getElementById("reqReason").value.trim();
+    var msg = document.getElementById("reqMsg");
+    if (!type || !from || !to || !reason) { if (msg) { msg.style.color = "#dc2626"; msg.textContent = "Please fill all fields."; } return; }
+    if (to < from) { if (msg) { msg.style.color = "#dc2626"; msg.textContent = "To-date must be after from-date."; } return; }
+    var list = getRequests();
+    var rec = { id: uid("REQ"), type: type, studentName: myName() || document.getElementById("reqName").value.trim(), studentId: myId() || document.getElementById("reqSid").value.trim(), from: from, to: to, reason: reason, status: "Pending", createdAt: new Date().toISOString(), decidedAt: null, note: "" };
+    if (!rec.studentName || !rec.studentId) { if (msg) { msg.style.color = "#dc2626"; msg.textContent = "Login first or enter name + ID."; } return; }
+    if (!confirm("Submit this leave / gate-pass request?")) return;
+    list.unshift(rec); save(LS.requests, list);
+    queueForSync({ path: "/api/requests", body: rec });
+    pushNoticeFor("Students", "New " + type + " request: " + rec.studentName + " (" + rec.id + ")", { title: "New request" });
+    if (msg) { msg.style.color = "#16a34a"; msg.textContent = "Request " + rec.id + " submitted. Print slip for gate/office."; }
+    var f = document.getElementById("requestForm"); if (f) f.reset();
+    prefillRequestIdentity(); displayRequests(); updateOpsDashboard(); updateStudentLive(); updateAdminLive();
+  }
+  function setRequestStatus(id, status) {
+    if (!confirm(status === "Approved" ? "Approve this leave / gate-pass request?" : status === "Rejected" ? "Reject this leave / gate-pass request?" : "Change this request status?")) return;
+    var list = getRequests(); var r = list.find(function (x) { return x.id === id; }); if (!r) return;
+    var note = status === "Pending" ? "" : (prompt("Optional note for student (gate timing / conditions):") || "");
+    r.status = status; r.note = note; r.decidedAt = new Date().toISOString();
+    save(LS.requests, list);
+    queueForSync({ path: "/api/requests/" + id + "/status", method: "PATCH", body: { status: status, note: note } });
+    displayRequests(); updateOpsDashboard(); updateAdminLive(); updateStudentLive();
+  }
+  function displayRequests() {
+    var body = document.getElementById("requestTableBody"); var mine = document.getElementById("myRequestTableBody");
+    var list = getRequests();
+    var q = ((document.getElementById("requestSearch") || {}).value || "").toLowerCase().trim();
+    var f = (document.getElementById("requestFilter") || {}).value || "";
+    var filtered = list.filter(function (r) {
+      var okQ = !q || (r.studentName + " " + r.studentId + " " + r.id + " " + r.reason).toLowerCase().includes(q);
+      return okQ && (!f || r.status === f || r.type === f);
+    });
+    if (body) {
+      body.innerHTML = filtered.length ? "" : '<tr><td colspan="6" style="text-align:center">No requests found.</td></tr>';
+      filtered.forEach(function (r) {
+        var tr = document.createElement("tr");
+        tr.innerHTML = "<td><strong>" + esc(r.id) + "</strong><br><small>" + esc(r.type) + "</small></td>" +
+          "<td>" + esc(r.studentName) + "<br><small>" + esc(r.studentId) + "</small></td>" +
+          "<td>" + esc(r.from) + " → " + esc(r.to) + "</td>" +
+          "<td>" + esc(r.reason) + (r.note ? "<br><small>Note: " + esc(r.note) + "</small>" : "") + "</td>" +
+          '<td><span class="pill pill-' + esc(r.status) + '">' + esc(r.status) + "</span></td>" +
+          "<td>" + '<div class="req-actions">' + (r.status === "Pending"
+            ? "<button class='ok-btn' onclick=\"setRequestStatus('" + r.id + "','Approved')\">Approve</button><button class='no-btn' onclick=\"setRequestStatus('" + r.id + "','Rejected')\">Reject</button>"
+            : "<small>" + esc((r.decidedAt || "").slice(0, 10)) + "</small><button class='ok-btn' onclick=\"printSlip('" + r.id + "','request')\">Slip</button>") + "</div></td>";
+        body.appendChild(tr);
+      });
+    }
+    if (mine) {
+      var me = myId();
+      var mineList = list.filter(function (r) { return !me || String(r.studentId) === String(me); }).slice(0, 10);
+      mine.innerHTML = mineList.length ? "" : '<tr><td colspan="5" style="text-align:center">No requests yet.</td></tr>';
+      mineList.forEach(function (r) {
+        var tr = document.createElement("tr");
+        tr.innerHTML = "<td><strong>" + esc(r.id) + "</strong></td><td>" + esc(r.type) + "</td><td>" + esc(r.from) + " → " + esc(r.to) + "</td>" +
+          '<td><span class="pill pill-' + esc(r.status) + '">' + esc(r.status) + "</span></td>" +
+          "<td><button class='ok-btn' onclick=\"printSlip('" + r.id + "','request')\">Slip</button></td>";
+        mine.appendChild(tr);
+      });
+    }
+    var pc = document.getElementById("pendingRequests"); if (pc) pc.textContent = list.filter(function (r) { return r.status === "Pending"; }).length;
+  }
+  function prefillRequestIdentity() {
+    var n = document.getElementById("reqName"); if (n && !n.value) n.value = myName();
+    var s = document.getElementById("reqSid"); if (s && !s.value) s.value = myId();
+  }
+
+  /* ================= CERTIFICATES ================= */
+  function getCertificates() { return load(LS.certificates, []); }
+  function requestCertificate(ev) {
+    if (ev) ev.preventDefault();
+    var kind = document.getElementById("certType").value;
+    var purpose = document.getElementById("certPurpose").value.trim();
+    var msg = document.getElementById("certMsg");
+    if (!kind || !purpose) { if (msg) { msg.style.color = "#dc2626"; msg.textContent = "Select type and purpose."; } return; }
+    var nm = myName() || ((document.getElementById("certName") || {}).value || "").trim();
+    var sid = myId() || ((document.getElementById("certSid") || {}).value || "").trim();
+    if (!nm || !sid) { if (msg) { msg.style.color = "#dc2626"; msg.textContent = "Login first or enter name + ID."; } return; }
+    if (!confirm("Submit this certificate request?")) return;
+    var list = getCertificates();
+    var rec = { id: uid("CERT"), kind: kind, purpose: purpose, studentName: nm, studentId: sid, status: "Pending", createdAt: new Date().toISOString(), issuedAt: null };
+    list.unshift(rec); save(LS.certificates, list);
+    queueForSync({ path: "/api/certificates", body: rec });
+    if (msg) { msg.style.color = "#16a34a"; msg.textContent = "Certificate request " + rec.id + " submitted."; }
+    var f = document.getElementById("certForm"); if (f) f.reset();
+    displayCertificates(); updateOpsDashboard(); updateAdminLive();
+  }
+  function setCertificateStatus(id, status) {
+    if (!confirm(status === "Issued" ? "Issue this certificate?" : "Reject this certificate request?")) return;
+    var list = getCertificates(); var c = list.find(function (x) { return x.id === id; }); if (!c) return;
+    c.status = status; c.issuedAt = status === "Issued" ? new Date().toISOString() : null;
+    save(LS.certificates, list);
+    queueForSync({ path: "/api/certificates/" + id + "/status", method: "PATCH", body: { status: status } });
+    displayCertificates(); updateOpsDashboard(); updateAdminLive();
+  }
+  function displayCertificates() {
+    var body = document.getElementById("certTableBody"); if (!body) return;
+    var list = getCertificates();
+    body.innerHTML = list.length ? "" : '<tr><td colspan="6" style="text-align:center">No certificate requests.</td></tr>';
+    list.forEach(function (c) {
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td><strong>" + esc(c.id) + "</strong></td><td>" + esc(c.studentName) + "<br><small>" + esc(c.studentId) + "</small></td>" +
+        "<td>" + esc(c.kind) + "</td><td>" + esc(c.purpose) + "</td>" +
+        '<td><span class="pill pill-' + esc(c.status) + '">' + esc(c.status) + "</span></td>" +
+        "<td>" + '<div class="cert-actions">' + (c.status === "Pending"
+          ? "<button class='ok-btn' onclick=\"setCertificateStatus('" + c.id + "','Issued')\">Issue</button><button class='no-btn' onclick=\"setCertificateStatus('" + c.id + "','Rejected')\">Reject</button>"
+          : "<button class='ok-btn' onclick=\"printSlip('" + c.id + "','certificate')\">Print</button>") + "</div></td>";
+      body.appendChild(tr);
+    });
+  }
+
+  /* ================= COMPLAINTS ================= */
+  var SLA_HOURS = { Electrical: 24, Plumbing: 24, Cleaning: 12, WiFi: 48, Food: 12, Other: 72 };
+  function getComplaints() { return load(LS.complaints, []); }
+  function submitComplaint(ev) {
+    if (ev) ev.preventDefault();
+    var cat = document.getElementById("compCategory").value;
+    var hostel = document.getElementById("compHostel").value.trim();
+    var room = document.getElementById("compRoom").value.trim();
+    var desc = document.getElementById("compDesc").value.trim();
+    var msg = document.getElementById("compMsg");
+    if (!cat || !desc) { if (msg) { msg.style.color = "#dc2626"; msg.textContent = "Category and description required."; } return; }
+    if (!confirm("Submit this hostel complaint?")) return;
+    var list = getComplaints();
+    var rec = { id: uid("CMP"), category: cat, hostel: hostel, room: room, desc: desc, studentName: myName(), studentId: myId(), priority: (cat === "Electrical" || cat === "Plumbing") ? "High" : "Normal", status: "Open", createdAt: new Date().toISOString(), resolvedAt: null, slaHours: SLA_HOURS[cat] || 48 };
+    list.unshift(rec); save(LS.complaints, list);
+    queueForSync({ path: "/api/complaints", body: rec });
+    if (msg) { msg.style.color = "#16a34a"; msg.textContent = "Complaint " + rec.id + " logged. SLA " + rec.slaHours + "h."; }
+    var f = document.getElementById("complaintForm"); if (f) f.reset();
+    displayComplaints(); updateOpsDashboard(); updateAdminLive();
+  }
+  function setComplaintStatus(id, status) {
+    if (!confirm(status === "Resolved" ? "Mark this complaint as resolved?" : "Start working on this complaint?")) return;
+    var list = getComplaints(); var c = list.find(function (x) { return x.id === id; }); if (!c) return;
+    c.status = status; c.resolvedAt = status === "Resolved" ? new Date().toISOString() : null;
+    save(LS.complaints, list);
+    queueForSync({ path: "/api/complaints/" + id + "/status", method: "PATCH", body: { status: status } });
+    displayComplaints(); updateOpsDashboard(); updateAdminLive();
+  }
+  function resolutionHours(c) { if (!c.resolvedAt) return null; return (new Date(c.resolvedAt) - new Date(c.createdAt)) / 36e5; }
+  function isBreached(c) { var end = c.resolvedAt ? new Date(c.resolvedAt) : new Date(); return (end - new Date(c.createdAt)) / 36e5 > (c.slaHours || 48) && c.status !== "Resolved"; }
+  function displayComplaints() {
+    var body = document.getElementById("complaintTableBody"); if (!body) return;
+    var list = getComplaints();
+    var q = ((document.getElementById("complaintSearch") || {}).value || "").toLowerCase();
+    var f = (document.getElementById("complaintFilter") || {}).value || "";
+    var filtered = list.filter(function (c) {
+      var okQ = !q || ((c.desc || "") + " " + (c.category || "") + " " + (c.room || "") + " " + c.id).toLowerCase().includes(q);
+      return okQ && (!f || c.status === f || c.category === f);
+    });
+    body.innerHTML = filtered.length ? "" : '<tr><td colspan="6" style="text-align:center">No complaints.</td></tr>';
+    filtered.forEach(function (c) {
+      var hrs = resolutionHours(c); var tr = document.createElement("tr");
+      tr.innerHTML = "<td><strong>" + esc(c.id) + "</strong><br><small>" + esc((c.createdAt || "").slice(0, 10)) + "</small>" + (isBreached(c) ? "<br><span class='pill pill-Breached'>SLA breached</span>" : "") + "</td>" +
+        "<td>" + esc(c.category) + "<br><small>" + esc(c.hostel) + " · " + esc(c.room) + "</small></td>" +
+        "<td>" + esc(c.desc) + "</td>" +
+        '<td><span class="pill pill-' + esc(String(c.status).replace(/[^A-Za-z]/g, "")) + '">' + esc(c.status) + "</span></td>" +
+        "<td>" + (hrs == null ? "—" : hrs.toFixed(1) + "h") + "<br><small>SLA " + (c.slaHours || 48) + "h</small></td>" +
+        "<td>" + '<div class="complaint-actions">' + (c.status === "Open" ? "<button class='ok-btn' onclick=\"setComplaintStatus('" + c.id + "','In-Progress')\">Start</button>" : "") +
+        (c.status !== "Resolved" ? "<button class='ok-btn' onclick=\"setComplaintStatus('" + c.id + "','Resolved')\">Resolve</button>" : "<button class='ok-btn' onclick=\"printSlip('" + c.id + "','complaint')\">Slip</button>") + "</div></td>";
+      body.appendChild(tr);
+    });
+  }
+
+  /* ================= MESS ================= */
+  function defaultMenu() {
+    return [
+      { day: "Monday", breakfast: "Poha + Tea", lunch: "Dal, Rice, Roti, Sabzi", dinner: "Paneer + Roti + Dal" },
+      { day: "Tuesday", breakfast: "Aloo Paratha + Curd", lunch: "Rajma, Rice, Roti", dinner: "Veg Biryani + Raita" },
+      { day: "Wednesday", breakfast: "Idli + Sambar", lunch: "Chole, Rice, Roti", dinner: "Dal Fry + Jeera Rice" },
+      { day: "Thursday", breakfast: "Bread Upma", lunch: "Veg Kolhapuri + Roti", dinner: "Soya + Roti" },
+      { day: "Friday", breakfast: "Puri + Sabzi", lunch: "Sambar Rice + Papad", dinner: "Special Thali" },
+      { day: "Saturday", breakfast: "Dosa + Chutney", lunch: "Pulao + Dal", dinner: "Kadhai Veg + Naan" },
+      { day: "Sunday", breakfast: "Chole Bhature", lunch: "Special Thali", dinner: "Khichdi + Kadhi" }
+    ];
+  }
+  function getMenu() { var m = load(LS.messMenu, null); if (!m) { m = defaultMenu(); save(LS.messMenu, m); } return m; }
+  /* Mess menu edits are Admin-only. Mirrors script.js auth
+     (campusSession via getCurrentUser/requireRole): same key,
+     same role string "Admin". Rate & feedback stays open. */
+  function isMessAdmin() {
+    try {
+      var u = null;
+      try {
+        if (typeof window !== "undefined" && typeof window.getCurrentUser === "function") u = window.getCurrentUser();
+      } catch (e) { u = null; }
+      if (!u) u = currentUser();
+      return !!(u && u.role === "Admin");
+    } catch (e) { return false; }
+  }
+  function displayMessMenu() {
+    var body = document.getElementById("messMenuBody"); if (!body) { updateMessToday(); return; }
+    body.innerHTML = "";
+    var isAdmin = isMessAdmin();
+    getMenu().forEach(function (r) {
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td><strong>" + esc(r.day) + "</strong></td><td>" + esc(r.breakfast) + "</td><td>" + esc(r.lunch) + "</td><td>" + esc(r.dinner) + "</td>" +
+        (isAdmin ? "<td class='no-print'><button type=\"button\" class=\"btn-secondary mess-edit-btn\" onclick=\"editMessDay('" + r.day + "')\" aria-label=\"Edit " + esc(r.day) + " menu\"><svg class=\"ic\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z\"/></svg><span>Edit</span></button></td>" : "");
+      body.appendChild(tr);
+    });
+    var head = document.getElementById("messMenuHeadRow");
+    if (head) {
+      var existing = document.getElementById("messEditHead");
+      if (isAdmin && !existing) { var th = document.createElement("th"); th.id = "messEditHead"; th.textContent = "Admin"; head.appendChild(th); }
+      else if (!isAdmin && existing && existing.parentNode === head) { head.removeChild(existing); }
+    }
+    updateMessToday();
+  }
+  function updateMessToday() {
+    var today = new Date().toLocaleString("en-US", { weekday: "long" });
+    var row = getMenu().find(function (r) { return r.day === today; });
+    ["messToday", "studMessToday", "messTodayShort"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = row ? today + ": " + row.breakfast + " | " + row.lunch + " | " + row.dinner : "Menu in table below.";
+    });
+  }
+  function editMessDay(day) {
+    if (!isMessAdmin()) { alert("Only Admin can edit the mess menu."); return; }
+    openMessEditModal(day);
+  }
+  /* Accessible modal replacing the old prompt() chain.
+     Same storage key (LS.messMenu) and post-save flow
+     (save -> displayMessMenu -> pushNoticeFor). Vanilla. */
+  var messEditState = { day: null, trigger: null };
+  function messEditFocusable() {
+    var dlg = document.querySelector("#messEditOverlay .mess-modal-dialog");
+    if (!dlg) return [];
+    return Array.prototype.slice.call(
+      dlg.querySelectorAll('input, button, [href], select, textarea, [tabindex]:not([tabindex="-1"])')
+    ).filter(function (el) { return !el.disabled; });
+  }
+  function openMessEditModal(day) {
+    if (!isMessAdmin()) { alert("Only Admin can edit the mess menu."); return; }
+    var menu = getMenu();
+    var row = null;
+    for (var i = 0; i < menu.length; i++) { if (menu[i].day === day) { row = menu[i]; break; } }
+    if (!row) return;
+    messEditState.day = day;
+    try { messEditState.trigger = document.activeElement; } catch (e) { messEditState.trigger = null; }
+    var overlay = document.getElementById("messEditOverlay");
+    if (!overlay) overlay = buildMessEditModal();
+    if (!overlay) return;
+    document.getElementById("messEditDay").textContent = day;
+    document.getElementById("messEditBreakfast").value = row.breakfast || "";
+    document.getElementById("messEditLunch").value = row.lunch || "";
+    document.getElementById("messEditDinner").value = row.dinner || "";
+    var msg = document.getElementById("messEditMsg");
+    if (msg) msg.textContent = "";
+    overlay.hidden = false;
+    try { document.body.style.overflow = "hidden"; } catch (e) {}
+    var first = document.getElementById("messEditBreakfast");
+    if (first && first.focus) { try { first.focus(); } catch (e) {} }
+  }
+  function buildMessEditModal() {
+    if (document.getElementById("messEditOverlay")) return document.getElementById("messEditOverlay");
+    var overlay = document.createElement("div");
+    overlay.id = "messEditOverlay";
+    overlay.className = "mess-modal-overlay";
+    overlay.hidden = true;
+    var dlg = document.createElement("div");
+    dlg.className = "mess-modal-dialog";
+    dlg.setAttribute("role", "dialog");
+    dlg.setAttribute("aria-modal", "true");
+    dlg.setAttribute("aria-labelledby", "messEditTitle");
+    var h = document.createElement("h2");
+    h.className = "mess-modal-title";
+    h.id = "messEditTitle";
+    h.appendChild(document.createTextNode("Edit menu \u2013 "));
+    var daySpan = document.createElement("span");
+    daySpan.id = "messEditDay";
+    h.appendChild(daySpan);
+    var form = document.createElement("form");
+    form.id = "messEditForm";
+    form.className = "mess-modal-form";
+    form.setAttribute("novalidate", "novalidate");
+    var fields = [
+      ["messEditBreakfast", "Breakfast", "e.g. Poha + Tea"],
+      ["messEditLunch", "Lunch", "e.g. Dal, Rice, Roti, Sabzi"],
+      ["messEditDinner", "Dinner", "e.g. Paneer + Roti + Dal"]
+    ];
+    fields.forEach(function (f) {
+      var wrap = document.createElement("div");
+      wrap.className = "form-field";
+      var lab = document.createElement("label");
+      lab.setAttribute("for", f[0]);
+      lab.textContent = f[1];
+      var inp = document.createElement("input");
+      inp.type = "text";
+      inp.id = f[0];
+      inp.name = f[0];
+      inp.placeholder = f[2];
+      inp.autocomplete = "off";
+      inp.maxLength = 200;
+      wrap.appendChild(lab);
+      wrap.appendChild(inp);
+      form.appendChild(wrap);
+    });
+    var status = document.createElement("p");
+    status.id = "messEditMsg";
+    status.className = "mess-modal-msg";
+    status.setAttribute("role", "status");
+    status.setAttribute("aria-live", "polite");
+    form.appendChild(status);
+    var actions = document.createElement("div");
+    actions.className = "mess-modal-actions";
+    var cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.id = "messEditCancel";
+    cancel.className = "btn-secondary";
+    cancel.textContent = "Cancel";
+    var saveBtn = document.createElement("button");
+    saveBtn.type = "submit";
+    saveBtn.id = "messEditSave";
+    saveBtn.className = "btn-primary";
+    saveBtn.textContent = "Save";
+    actions.appendChild(cancel);
+    actions.appendChild(saveBtn);
+    form.appendChild(actions);
+    dlg.appendChild(h);
+    dlg.appendChild(form);
+    overlay.appendChild(dlg);
+    document.body.appendChild(overlay);
+    overlay.addEventListener("mousedown", function (ev) {
+      if (ev.target === overlay) closeMessEditModal();
+    });
+    cancel.addEventListener("click", closeMessEditModal);
+    form.addEventListener("submit", saveMessEditModal);
+    document.addEventListener("keydown", messEditKeyHandler);
+    return overlay;
+  }
+  function messEditKeyHandler(ev) {
+    var overlay = document.getElementById("messEditOverlay");
+    if (!overlay || overlay.hidden) return;
+    if (ev.key === "Escape" || ev.key === "Esc") { ev.preventDefault(); closeMessEditModal(); return; }
+    if (ev.key !== "Tab") return;
+    var items = messEditFocusable();
+    if (!items.length) { ev.preventDefault(); return; }
+    var first = items[0];
+    var last = items[items.length - 1];
+    if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); try { last.focus(); } catch (e) {} }
+    else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); try { first.focus(); } catch (e) {} }
+  }
+  function closeMessEditModal() {
+    var overlay = document.getElementById("messEditOverlay");
+    if (overlay) overlay.hidden = true;
+    try { document.body.style.overflow = ""; } catch (e) {}
+    var t = messEditState.trigger;
+    messEditState.day = null;
+    messEditState.trigger = null;
+    if (t && t.focus) { try { t.focus(); } catch (e) {} }
+  }
+  function saveMessEditModal(ev) {
+    if (ev) ev.preventDefault();
+    if (!isMessAdmin()) { alert("Only Admin can edit the mess menu."); closeMessEditModal(); return; }
+    var day = messEditState.day;
+    if (!day) return;
+    if (!confirm("Save mess menu for " + day + "?")) return;
+    var menu = getMenu();
+    var row = null;
+    for (var i = 0; i < menu.length; i++) { if (menu[i].day === day) { row = menu[i]; break; } }
+    if (!row) { closeMessEditModal(); return; }
+    row.breakfast = document.getElementById("messEditBreakfast").value;
+    row.lunch = document.getElementById("messEditLunch").value;
+    row.dinner = document.getElementById("messEditDinner").value;
+    save(LS.messMenu, menu);
+    displayMessMenu();
+    pushNoticeFor("Students", "Mess menu updated for " + day, { title: "Mess update" });
+    closeMessEditModal();
+  }
+  function submitMessFeedback(ev) {
+    if (ev) ev.preventDefault();
+    var meal = document.getElementById("messMeal").value; var rating = document.getElementById("messRating").value;
+    var text = document.getElementById("messText").value.trim(); var msg = document.getElementById("messMsg");
+    if (!meal || !rating) { if (msg) msg.textContent = "Select meal and rating."; return; }
+    if (!confirm("Submit this mess feedback?")) return;
+    var list = load(LS.messFeedback, []);
+    list.unshift({ id: uid("MESS"), meal: meal, rating: Number(rating), text: text, studentId: myId(), at: new Date().toISOString() });
+    save(LS.messFeedback, list.slice(0, 200));
+    queueForSync({ path: "/api/mess/feedback", body: list[0] });
+    if (msg) { msg.style.color = "#16a34a"; msg.textContent = "Thanks! Feedback recorded."; }
+    var f = document.getElementById("messForm"); if (f) f.reset();
+    displayMessFeedback(); updateOpsDashboard(); updateAdminLive();
+  }
+  function displayMessFeedback() {
+    var body = document.getElementById("messFeedbackBody"); var list = load(LS.messFeedback, []);
+    var avg = list.length ? (list.reduce(function (a, b) { return a + Number(b.rating || 0); }, 0) / list.length).toFixed(1) : "—";
+    ["messAvg", "opsMess", "adminMess"].forEach(function (id) { var el = document.getElementById(id); if (el) el.textContent = avg + (list.length ? " (" + list.length + ")" : ""); });
+    if (!body) return;
+    body.innerHTML = list.slice(0, 20).length ? "" : '<tr><td colspan="4" style="text-align:center">No feedback yet.</td></tr>';
+    list.slice(0, 20).forEach(function (f) {
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td>" + esc(f.meal) + "</td><td>" + "★".repeat(Math.max(1, Math.min(5, f.rating))) + "</td><td>" + esc(f.text) + "</td><td><small>" + esc((f.at || "").slice(0, 10)) + "</small></td>";
+      body.appendChild(tr);
+    });
+  }
+
+  /* ================= FEE QUERIES ================= */
+  function getFeeQueries() { return load(LS.feeQueries, []); }
+  function raiseFeeQuery(ev) {
+    if (ev) ev.preventDefault();
+    var sid = ((document.getElementById("fqSid") || {}).value || myId() || "").trim();
+    var topic = document.getElementById("fqTopic").value; var text = document.getElementById("fqText").value.trim();
+    var msg = document.getElementById("fqMsg");
+    if (!topic || !text) { if (msg) msg.textContent = "Fill topic and details."; return; }
+    if (!confirm("Submit this fee query?")) return;
+    var list = getFeeQueries();
+    list.unshift({ id: uid("FEEQ"), studentId: sid, studentName: myName(), topic: topic, text: text, status: "Open", createdAt: new Date().toISOString() });
+    save(LS.feeQueries, list);
+    queueForSync({ path: "/api/fee-queries", body: list[0] });
+    if (msg) { msg.style.color = "#16a34a"; msg.textContent = "Query raised. Accounts will respond via Notices."; }
+    var f = document.getElementById("feeQueryForm"); if (f) f.reset();
+    var s = document.getElementById("fqSid"); if (s && myId()) s.value = myId();
+    displayFeeQueries(); updateOpsDashboard(); updateAdminLive();
+  }
+  function setFeeQueryStatus(id, status) {
+    if (!confirm("Mark this fee query as resolved?")) return;
+    var list = getFeeQueries(); var q = list.find(function (x) { return x.id === id; }); if (!q) return;
+    q.status = status; save(LS.feeQueries, list);
+    queueForSync({ path: "/api/fee-queries/" + id + "/status", method: "PATCH", body: { status: status } });
+    displayFeeQueries(); updateOpsDashboard(); updateAdminLive();
+  }
+  function displayFeeQueries() {
+    ["feeQueryBody", "feeQueryBody2"].forEach(function (bid) {
+      var body = document.getElementById(bid); if (!body) return;
+      var list = getFeeQueries();
+      body.innerHTML = list.length ? "" : '<tr><td colspan="5" style="text-align:center">No fee queries.</td></tr>';
+      list.forEach(function (q) {
+        var tr = document.createElement("tr");
+        tr.innerHTML = "<td><strong>" + esc(q.id) + "</strong></td><td>" + esc(q.studentId) + "</td><td>" + esc(q.topic) + "<br><small>" + esc(q.text) + "</small></td>" +
+          '<td><span class="pill pill-' + esc(q.status) + '">' + esc(q.status) + "</span></td>" +
+          "<td>" + (q.status === "Open" ? "<button class='ok-btn' onclick=\"setFeeQueryStatus('" + q.id + "','Resolved')\">Resolve</button>" : esc((q.createdAt || "").slice(0, 10))) + "</td>";
+        body.appendChild(tr);
+      });
+    });
+  }
+
+  /* ================= TARGETED NOTICES ================= */
+  function pushNoticeFor(audience, message, opts) {
+    opts = opts || {};
+    try {
+      var list = getAnnouncements();
+      list.unshift({ id: "ANN" + Date.now(), title: opts.title || "Update", message: message, audience: audience, department: opts.department || "All", semester: opts.semester || "All", priority: opts.priority || "Normal", date: todayISO() });
+      localStorage.setItem("campusAnnouncements", JSON.stringify(list.slice(0, 200)));
+      renderMyNotices();
+    } catch (e) {}
+  }
+  function myNotices() {
+    var list = getAnnouncements(); var meDept = myDept(); var meSem = mySem();
+    return list.filter(function (a) {
+      if (a.audience === "Faculty") return false;
+      if (a.department && a.department !== "All" && meDept && a.department !== meDept) return false;
+      if (a.semester && a.semester !== "All" && meSem && a.semester !== meSem) return false;
+      return true;
+    }).slice(0, 8);
+  }
+  function renderMyNotices() {
+    ["myNotices", "myNoticesStudent", "opsMyNotices"].forEach(function (bid) {
+      var box = document.getElementById(bid); if (!box) return;
+      var list = bid === "opsMyNotices" ? getAnnouncements().slice(0, 5) : myNotices();
+      box.innerHTML = list.length ? "" : "<p><small>No new notices.</small></p>";
+      list.forEach(function (a) {
+        var div = document.createElement("div");
+        div.className = "notice-item" + (a.priority === "High" ? " notice-high" : "");
+        div.innerHTML = "<strong>" + esc(a.title) + "</strong><p>" + esc(a.message) + "</p><small>" + esc(a.date || "") + " · " + esc(a.audience || "") + ((a.department && a.department !== "All") ? " · " + esc(a.department) : "") + ((a.semester && a.semester !== "All") ? " · " + esc(a.semester) : "") + "</small>";
+        box.appendChild(div);
+      });
+    });
+  }
+  // Wrap legacy addAnnouncement (script.js) to capture dept/sem targeting without editing it
+  function enhanceAnnouncements() {
+    try {
+      var deptSel = document.getElementById("announcementDept"); var semSel = document.getElementById("announcementSemester");
+      var audSel = document.getElementById("announcementAudience");
+      function labeledField(id, labelText, selectHTML) {
+        var wrap = document.createElement("div"); wrap.className = "form-field";
+        var lab = document.createElement("label"); lab.setAttribute("for", id); lab.textContent = labelText;
+        var sel = document.createElement("select"); sel.id = id; sel.innerHTML = selectHTML;
+        wrap.appendChild(lab); wrap.appendChild(sel);
+        return wrap;
+      }
+      function fieldContainer(el) {
+        if (!el) return null;
+        if (el.closest) { var c = el.closest(".form-field"); if (c) return c; }
+        return el;
+      }
+      if (audSel && !deptSel) {
+        var deptWrap = labeledField("announcementDept", "Department", "<option value='All'>All departments</option><option>Computer Science</option><option>Information Technology</option><option>Mechanical Engineering</option>");
+        var anchor = fieldContainer(audSel);
+        anchor.parentNode.insertBefore(deptWrap, anchor.nextSibling);
+        deptSel = document.getElementById("announcementDept");
+      }
+      if (audSel && !semSel) {
+        var semWrap = labeledField("announcementSemester", "Semester", "<option value='All'>All semesters</option><option>1st Semester</option><option>2nd Semester</option><option>3rd Semester</option><option>4th Semester</option><option>5th Semester</option><option>6th Semester</option><option>7th Semester</option><option>8th Semester</option>");
+        var anchor2 = fieldContainer(deptSel || audSel);
+        anchor2.parentNode.insertBefore(semWrap, anchor2.nextSibling);
+      }
+      if (window.addAnnouncement && !window.addAnnouncement._hubWrapped) {
+        var orig = window.addAnnouncement;
+        window.addAnnouncement = function (ev) {
+          var d = (document.getElementById("announcementDept") || {}).value || "All";
+          var s = (document.getElementById("announcementSemester") || {}).value || "All";
+          var before = getAnnouncements().length;
+          var r = orig(ev);
+          try {
+            var list = getAnnouncements();
+            if (list.length > before) { list[0].department = d; list[0].semester = s; localStorage.setItem("campusAnnouncements", JSON.stringify(list)); }
+            else if (list.length) { var last = list[list.length - 1]; last.department = last.department || d; last.semester = last.semester || s; localStorage.setItem("campusAnnouncements", JSON.stringify(list)); }
+          } catch (e) {}
+          renderMyNotices();
+          return r;
+        };
+        window.addAnnouncement._hubWrapped = true;
+      }
+      // wrap timetable to auto-notify students of updates
+      if (window.addTimetable && !window.addTimetable._hubWrapped) {
+        var origT = window.addTimetable;
+        window.addTimetable = function (ev) {
+          var course = ((document.getElementById("timetableCourse") || {}).value || "").trim();
+          var day = ((document.getElementById("timetableDay") || {}).value || "");
+          var r = origT(ev);
+          if (course) pushNoticeFor("Students", "Timetable updated: " + course + (day ? " on " + day : "") + ". Check Timetable page.", { title: "Timetable update", priority: "Important" });
+          return r;
+        };
+        window.addTimetable._hubWrapped = true;
+      }
+    } catch (e) {}
+  }
+
+  /* ================= OPS + LIVE DASHBOARDS ================= */
+  function opsStats() {
+    var reqs = getRequests(), comps = getComplaints(), certs = getCertificates(), feeQ = getFeeQueries(), mess = load(LS.messFeedback, []);
+    var pendingReq = reqs.filter(function (r) { return r.status === "Pending"; }).length;
+    var openComp = comps.filter(function (c) { return c.status !== "Resolved"; }).length;
+    var pendingCert = certs.filter(function (c) { return c.status === "Pending"; }).length;
+    var openFeeQ = feeQ.filter(function (q) { return q.status === "Open"; }).length;
+    var resolved = comps.filter(function (c) { return c.resolvedAt; });
+    var avg = resolved.length ? resolved.reduce(function (a, c) { return a + resolutionHours(c); }, 0) / resolved.length : 0;
+    var byCat = {}; comps.forEach(function (c) { var k = c.category || "Other"; byCat[k] = (byCat[k] || 0) + 1; });
+    var mAvg = mess.length ? mess.reduce(function (a, b) { return a + Number(b.rating || 0); }, 0) / mess.length : 0;
+    return { pendingReq: pendingReq, openComp: openComp, pendingCert: pendingCert, openFeeQ: openFeeQ, total: pendingReq + openComp + pendingCert + openFeeQ, avgHrs: avg, resolvedCount: resolved.length, breach: comps.filter(isBreached).length, byCat: byCat, messAvg: mAvg, lowAttend: lowAttendanceList(), todayCount: todaysClasses().length };
+  }
+  function setText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
+  function updateOpsDashboard() {
+    if (!document.getElementById("opsPending")) return;
+    var s = opsStats();
+    setText("opsPending", s.total); setText("opsReqPending", s.pendingReq); setText("opsCompOpen", s.openComp);
+    setText("opsCertPending", s.pendingCert); setText("opsFeeOpen", s.openFeeQ);
+    setText("opsAvgResolve", s.resolvedCount ? s.avgHrs.toFixed(1) + "h" : "—"); setText("opsBreach", s.breach);
+    setText("opsMess", s.messAvg ? s.messAvg.toFixed(1) : "—");
+    setText("opsLowAttend", s.lowAttend.length); setText("opsTodayClasses", s.todayCount);
+    /* Legacy linear recurring list removed (was duplicating the static
+       segmented Electrical 5/20 + Cleaning 4/20 block below with live
+       counts of 1). Single source is now the maint-progress segmented +
+       gradient markup; just hide/clear any stale container. */
+    var rb = document.getElementById("opsRecurring");
+    if (rb) { rb.innerHTML = ""; rb.style.display = "none"; }
+    var pt = document.getElementById("opsPendingBody");
+    if (pt) {
+      var items = [];
+      getRequests().filter(function (r) { return r.status === "Pending"; }).slice(0, 5).forEach(function (r) { items.push({ kind: r.type, id: r.id, who: r.studentName, at: r.createdAt }); });
+      getComplaints().filter(function (c) { return c.status !== "Resolved"; }).slice(0, 5).forEach(function (c) { items.push({ kind: "Complaint:" + c.category, id: c.id, who: (c.room || c.studentId || ""), at: c.createdAt }); });
+      getFeeQueries().filter(function (q) { return q.status === "Open"; }).slice(0, 3).forEach(function (q) { items.push({ kind: "Fee:" + q.topic, id: q.id, who: q.studentId, at: q.createdAt }); });
+      pt.innerHTML = items.length ? "" : '<tr><td colspan="4" style="text-align:center">All clear</td></tr>';
+      items.forEach(function (it) {
+        var tr = document.createElement("tr");
+        tr.innerHTML = "<td>" + esc(it.kind) + "</td><td>" + esc(it.id) + "</td><td>" + esc(it.who) + "</td><td><small>" + esc((it.at || "").slice(0, 10)) + "</small></td>";
+        pt.appendChild(tr);
+      });
+    }
+    var low = document.getElementById("opsLowAttendBody");
+    if (low) {
+      var l = opsStats().lowAttend.slice(0, 5);
+      low.innerHTML = l.length ? "" : '<tr><td colspan="4" style="text-align:center">No low attendance</td></tr>';
+      l.forEach(function (v) {
+        var tr = document.createElement("tr");
+        tr.innerHTML = "<td>" + esc(v.studentName) + "</td><td>" + esc(v.studentId) + "</td><td>" + v.present + "/" + v.total + "</td><td>" + v.pct + "%</td>";
+        low.appendChild(tr);
+      });
+    }
+    try { refreshHubProgressBars(); } catch (e) {}
+  }
+  function updateStudentLive() {
+    if (!document.getElementById("studAttendPct") && !document.getElementById("timetableTodayBody") && !document.getElementById("myNoticesStudent")) return;
+    var a = myAttendancePct();
+    setText("studAttendPct", a ? a.pct + "%" : "—");
+    setText("studAttendSub", a ? a.present + " of " + a.total + " classes" : "No records yet");
+    var due = myFeesDue();
+    setText("studFeesDue", due == null ? "—" : "Rs " + Number(due).toLocaleString("en-IN"));
+    var me = myId();
+    setText("studPendingMine", getRequests().filter(function (r) { return r.status === "Pending" && (!me || String(r.studentId) === String(me)); }).length);
+    updateMessToday();
+    var tb = document.getElementById("timetableTodayBody");
+    if (tb) {
+      var cls = todaysClasses().slice(0, 5);
+      tb.innerHTML = cls.length ? "" : "<p><small>No classes scheduled today.</small></p>";
+      cls.forEach(function (c) {
+        var div = document.createElement("div"); div.className = "class-row";
+        div.innerHTML = "<div class='class-time'>" + esc(c.start || "") + "</div><div class='class-details'><h3>" + esc(c.course || "") + "</h3><p>" + esc(c.faculty || "") + " · " + esc(c.room || "") + "</p></div><span class='class-status'>" + esc(c.day || "") + "</span>";
+        tb.appendChild(div);
+      });
+    }
+    var rp = document.getElementById("myRequestsPreview");
+    if (rp) {
+      var mine = getRequests().filter(function (r) { return !me || String(r.studentId) === String(me); }).slice(0, 3);
+      rp.innerHTML = mine.length ? "" : "<p><small>No requests. Use Leave & Gate-Pass page.</small></p>";
+      mine.forEach(function (r) {
+        var d = document.createElement("div"); d.className = "notice-item";
+        d.innerHTML = "<strong>" + esc(r.type) + " · " + esc(r.id) + "</strong><p>" + esc(r.from) + " → " + esc(r.to) + " · " + esc(r.status) + "</p>";
+        rp.appendChild(d);
+      });
+    }
+    renderMyNotices();
+  }
+  function updateAdminLive() {
+    if (!document.getElementById("adminPending")) return;
+    var s = opsStats();
+    setText("adminPending", s.total); setText("adminReqPending", s.pendingReq); setText("adminOpenComp", s.openComp);
+    setText("adminAvgResolve", s.resolvedCount ? s.avgHrs.toFixed(1) + "h" : "—"); setText("adminMess", s.messAvg ? s.messAvg.toFixed(1) : "—");
+    setText("adminLowAttend", s.lowAttend.length); setText("adminBreach", s.breach);
+    try {
+      var storedStudents = load("campusStudents", null); var users = load("campusUsers", null);
+      if (storedStudents && typeof storedStudents.length === "number") setText("adminTotalStudents", storedStudents.length);
+      else if (typeof students !== "undefined" && students && typeof students.length === "number") setText("adminTotalStudents", students.length);
+      else if (users) setText("adminTotalStudents", users.filter(function (u) { return u.role === "Student"; }).length);
+    } catch (e) {}
+    try { refreshHubProgressBars(); } catch (e) {}
+  }
+
+  /* ================= PRINT ================= */
+  function printSlip(id, kind) {
+    var rec = null, title = "CAMPUS SLIP (offline valid)";
+    if (kind === "request") rec = getRequests().find(function (r) { return r.id === id; });
+    if (kind === "certificate") rec = getCertificates().find(function (r) { return r.id === id; });
+    if (kind === "complaint") rec = getComplaints().find(function (r) { return r.id === id; });
+    if (!rec) { alert("Record not found on this device."); return; }
+    var bodyHtml;
+    if (kind === "certificate" && rec.status === "Issued") {
+      bodyHtml = "<h2 style='text-align:center'>BONAFIDE / " + esc(rec.kind.toUpperCase()) + "</h2>" +
+        "<p>This is to certify that <b>" + esc(rec.studentName) + " (" + esc(rec.studentId) + ")</b> is a student of this institution.</p>" +
+        "<p>Purpose: " + esc(rec.purpose) + "</p><p>Ref: " + esc(rec.id) + " · Issued: " + esc((rec.issuedAt || "").slice(0, 10)) + "</p>" +
+        "<br><p>Registrar signature: _______ &nbsp; Seal: _______</p>";
+    } else {
+      bodyHtml = "<h2 style='text-align:center'>" + title + "</h2><div style='border:2px dashed #000;padding:12px'><pre>" + esc(JSON.stringify(rec, null, 2)) + "</pre></div><p>Show at gate/office. Signature: _______</p>";
+    }
+    var w = window.open("", "_blank", "width=480,height=640");
+    w.document.write("<html><head><title>Slip " + esc(id) + "</title><style>body{font-family:Arial;padding:20px}pre{white-space:pre-wrap;font-size:12px}</style></head><body>" + bodyHtml + "<script>window.print()<\/script></body></html>");
+    w.document.close();
+  }
+
+  /* ================= INIT ================= */
+  // Explicit dev opt-out: visiting any page with ?dev=1 (or setting
+  // localStorage.campusDevNoSW = "1") unregisters the SW and clears
+  // campushub-* caches so reloads are always fresh without Ctrl+Shift+R.
+  // Plain localhost keeps the SW registered, but sw.js itself bypasses its
+  // cache on localhost, and the dev server sends no-store headers.
+  function isDevNoSw() {
+    try {
+      if (location.search.indexOf("dev=1") !== -1) return true;
+      if (location.search.indexOf("nocache") !== -1) return true;
+      if (window.localStorage && localStorage.getItem("campusDevNoSW") === "1") return true;
+    } catch (e) {}
+    return false;
+  }
+  function registerSW() {
+    try {
+      if (!("serviceWorker" in navigator) || !location.protocol.startsWith("http")) return;
+      if (isDevNoSw()) {
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (r) { try { r.unregister(); } catch (e) {} });
+        }).catch(function () {});
+        try {
+          if ("caches" in window) {
+            caches.keys().then(function (keys) {
+              keys.forEach(function (k) {
+                if (k.indexOf("campushub-") === 0) caches.delete(k).catch(function () {});
+              });
+            }).catch(function () {});
+          }
+        } catch (e) {}
+        return;
+      }
+      if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+        navigator.serviceWorker.register("sw.js").then(function (reg) {
+          // Pick up new SW/CSS on normal navigation; new SW uses skipWaiting +
+          // clients.claim so it activates without a hard reload. No forced
+          // location.reload() here (that was the reload-loop bug).
+          try { if (reg && reg.update) reg.update().catch(function () {}); } catch (e) {}
+        }).catch(function () {});
+      }
+    } catch (e) {}
+  }
+  /* ---------------- progress helper (progress.js) ---------------- */
+  /* Pages include <script src="progress.js"> directly; this guarded
+     loader covers hub pages where the tag is missing. No libs,
+     no ID/handler changes — loads once, only if helpers absent. */
+  function ensureProgressHelper() {
+    try {
+      if (window.setProgress && window.runWithProgress) return;
+      if (window.__progressHelperLoading || document.getElementById("progressHelperScript")) return;
+      window.__progressHelperLoading = true;
+      var s = document.createElement("script");
+      s.id = "progressHelperScript";
+      s.src = "progress.js";
+      s.defer = true;
+      s.onload = function () { window.__progressHelperLoading = false; };
+      s.onerror = function () { window.__progressHelperLoading = false; };
+      document.head.appendChild(s);
+    } catch (e) {}
+  }
+  /* ---------------- segmented + gradient (ops/admin dashboards) ---------------- */
+  /* Contract: <div class="progress-segmented" data-done="5" data-total="20">
+     renders as 20 .segment divs with 5 .filled. Gradient:
+     <div class="progress progress-gradient"><div class="progress-bar"
+     style="width:X%"></div></div>. Vanilla, IDs/handlers preserved,
+     accessible (role=progressbar, aria-valuenow/min/max, visible 5/20).
+     Primary renderer is window.renderSegmented from progress.js;
+     hubRenderSegmentedFallback covers pages where that tag is absent. */
+  function hubSegmentedNumbers(el) {
+    var doneRaw = el.getAttribute("data-done");
+    if (doneRaw === null || doneRaw === "") doneRaw = el.getAttribute("data-count");
+    var totalRaw = el.getAttribute("data-total");
+    var total = parseInt(totalRaw, 10);
+    if (isNaN(total) || total < 0) total = 0;
+    if (total > 100) total = 100;
+    var done = parseInt(doneRaw, 10);
+    if (isNaN(done) || done < 0) done = 0;
+    if (done > total) done = total;
+    return { done: done, total: total };
+  }
+  function hubRenderOneSegmented(el) {
+    if (!el || el.nodeType !== 1) return null;
+    var nums = hubSegmentedNumbers(el);
+    el.innerHTML = "";
+    for (var i = 0; i < nums.total; i++) {
+      var seg = document.createElement("div");
+      seg.className = "segment" + (i < nums.done ? " filled" : "");
+      seg.setAttribute("aria-hidden", "true");
+      el.appendChild(seg);
+    }
+    el.setAttribute("role", "progressbar");
+    el.setAttribute("aria-valuemin", "0");
+    el.setAttribute("aria-valuemax", String(nums.total));
+    el.setAttribute("aria-valuenow", String(nums.done));
+    el.setAttribute("aria-valuetext", nums.done + " of " + nums.total);
+    if (!el.hasAttribute("aria-label")) el.setAttribute("aria-label", "Progress " + nums.done + " of " + nums.total);
+    return el;
+  }
+  function hubRenderSegmentedFallback(scope) {
+    var list;
+    try {
+      var root = scope && scope.querySelectorAll ? scope : document;
+      list = root.querySelectorAll(".progress-segmented");
+    } catch (e) { return []; }
+    var out = [];
+    for (var i = 0; i < list.length; i++) {
+      try { hubRenderOneSegmented(list[i]); out.push(list[i]); } catch (e) {}
+    }
+    return out;
+  }
+  if (!window.renderSegmented) {
+    window.renderSegmented = function (container) {
+      try {
+        if (container && container.nodeType === 1) {
+          if (container.classList && container.classList.contains("progress-segmented")) return [hubRenderOneSegmented(container)];
+          return hubRenderSegmentedFallback(container);
+        }
+        if (typeof container === "string" && container) {
+          var found = null;
+          try { found = document.querySelectorAll(container); } catch (e) { found = null; }
+          if (found && found.length) {
+            var done = [];
+            for (var i = 0; i < found.length; i++) {
+              var el = found[i];
+              if (el.classList && el.classList.contains("progress-segmented")) { hubRenderOneSegmented(el); done.push(el); }
+              else { hubRenderSegmentedFallback(el).forEach(function (x) { done.push(x); }); }
+            }
+            return done;
+          }
+        }
+      } catch (e) {}
+      return hubRenderSegmentedFallback(document);
+    };
+    window.renderSegmented._hubFallback = true;
+  }
+  function setGradientBar(barId, trackId, labelId, pct) {
+    pct = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
+    var bar = document.getElementById(barId);
+    var track = trackId ? document.getElementById(trackId) : (bar && bar.parentElement ? bar.parentElement : null);
+    var label = labelId ? document.getElementById(labelId) : null;
+    if (bar) {
+      try {
+        if (window.setProgress && !window.renderSegmented._hubFallback) window.setProgress(bar, pct);
+        else {
+          bar.style.width = pct + "%";
+          bar.setAttribute("role", "progressbar");
+          bar.setAttribute("aria-valuemin", "0");
+          bar.setAttribute("aria-valuemax", "100");
+          bar.setAttribute("aria-valuenow", String(pct));
+          bar.setAttribute("aria-valuetext", pct + "%");
+        }
+      } catch (e) {
+        bar.style.width = pct + "%";
+      }
+      /* Keep outer track ARIA in sync for checkers reading either node. */
+      if (track && track !== bar) {
+        track.setAttribute("role", "progressbar");
+        track.setAttribute("aria-valuemin", "0");
+        track.setAttribute("aria-valuemax", "100");
+        track.setAttribute("aria-valuenow", String(pct));
+        track.setAttribute("aria-valuetext", pct + "%");
+      }
+    } else if (track) {
+      track.setAttribute("role", "progressbar");
+      track.setAttribute("aria-valuemin", "0");
+      track.setAttribute("aria-valuemax", "100");
+      track.setAttribute("aria-valuenow", String(pct));
+      track.setAttribute("aria-valuetext", pct + "%");
+    }
+    if (label) label.textContent = pct + "%";
+  }
+  function refreshHubProgressBars() {
+    try {
+      if (typeof window.renderSegmented === "function") window.renderSegmented();
+      else hubRenderSegmentedFallback(document);
+    } catch (e) {
+      try { hubRenderSegmentedFallback(document); } catch (e2) {}
+    }
+    try {
+      var comps = getComplaints();
+      var total = comps.length;
+      var resolved = comps.filter(function (c) { return c.status === "Resolved"; }).length;
+      var pct = total ? Math.round(resolved / total * 100) : 0;
+      setGradientBar("opsCompletionBar", "opsCompletionTrack", "opsCompletionPct", pct);
+      setGradientBar("adminCompletionBar", "adminCompletionTrack", "adminCompletionPct", pct);
+    } catch (e) {}
+  }
+  var bound = false;
+  document.addEventListener("DOMContentLoaded", function () {
+    seedDemoData();
+    setLanguage(getLang()); applyTheme(); initApiBaseField(); updateNetBadge(); registerSW();
+    ensureProgressHelper();
+    window.addEventListener("online", updateNetBadge); window.addEventListener("offline", updateNetBadge);
+    enhanceAnnouncements();
+    prefillRequestIdentity();
+    var n = document.getElementById("certName"); if (n && !n.value) n.value = myName();
+    var s = document.getElementById("certSid"); if (s && !s.value) s.value = myId();
+    var fq = document.getElementById("fqSid"); if (fq && !fq.value && myId()) fq.value = myId();
+    displayRequests(); displayCertificates(); displayComplaints(); displayMessMenu(); displayMessFeedback(); displayFeeQueries();
+    renderMyNotices(); updateOpsDashboard(); updateStudentLive(); updateAdminLive();
+    try { refreshHubProgressBars(); } catch (e) {}
+    if (!bound) {
+      bound = true;
+      var rf = document.getElementById("requestForm"); if (rf) rf.addEventListener("submit", submitRequest);
+      var cf = document.getElementById("certForm"); if (cf) cf.addEventListener("submit", requestCertificate);
+      var cmf = document.getElementById("complaintForm"); if (cmf) cmf.addEventListener("submit", submitComplaint);
+      var mf = document.getElementById("messForm"); if (mf) mf.addEventListener("submit", submitMessFeedback);
+      var fee = document.getElementById("feeQueryForm"); if (fee) fee.addEventListener("submit", raiseFeeQuery);
+    }
+  });
+
+  window.submitRequest = submitRequest; window.setRequestStatus = setRequestStatus; window.displayRequests = displayRequests;
+  window.requestCertificate = requestCertificate; window.setCertificateStatus = setCertificateStatus; window.displayCertificates = displayCertificates;
+  window.submitComplaint = submitComplaint; window.setComplaintStatus = setComplaintStatus; window.displayComplaints = displayComplaints;
+  window.submitMessFeedback = submitMessFeedback; window.editMessDay = editMessDay;
+  window.closeMessEditModal = closeMessEditModal;
+  window.raiseFeeQuery = raiseFeeQuery; window.setFeeQueryStatus = setFeeQueryStatus;
+  window.setLanguage = setLanguage; window.toggleTheme = toggleTheme; window.applyTheme = applyTheme; window.toggleLiteMode = toggleLiteMode; window.applyLiteMode = applyLiteMode; window.printSlip = printSlip; window.t = t;
+  window.apiBase = apiBase; window.setApiBase = setApiBase; window.getApiBase = apiBase;
+  window.hubStats = opsStats;
+})();
